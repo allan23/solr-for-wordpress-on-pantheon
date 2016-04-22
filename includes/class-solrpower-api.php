@@ -115,6 +115,7 @@ class SolrPower_Api {
 			$solr->ping( $solr->createPing() );
 			return true;
 		} catch ( Solarium\Exception\HttpException $e ) {
+			$this->add_log(array('error'=>$e->getMessage()));
 			return false;
 		}
 	}
@@ -165,8 +166,10 @@ class SolrPower_Api {
 				$update->addOptimize();
 				$solr->update( $update );
 			}
+			return true;
 		} catch ( Exception $e ) {
 			syslog( LOG_ERR, $e->getMessage() );
+			return false;
 		}
 	}
 

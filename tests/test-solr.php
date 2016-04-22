@@ -50,12 +50,51 @@ class SolrTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Filter to change Solr connection configuration.
+	 *
+	 * @param array $defaults Default Solr Config
+	 *
+	 * @return array
+	 */
+	function __change_solr_options( $defaults ) {
+		$options = array(
+			'endpoint' => array(
+				'localhost' => array(
+					'host'   => 'localhost',
+					'port'   => '1009',
+					'scheme' => 'http',
+					'path'   => SolrPower_Api::get_instance()->compute_path()
+				)
+			)
+		);
+
+		return $options;
+	}
+	/**
 	 * Test to see if we can ping the Solr server.
 	 */
 	function test_solr_active() {
 		$this->assertTrue( SolrPower_Api::get_instance()->ping_server() );
 	}
 
+	/**
+	 * Test to see if ping returns false when connection is bad.
+	 */
+	function test_bad_ping() {
+		add_filter( 's4wp_connection_options', array( $this, '__change_solr_options' ) );
+		$this->assertFalse( SolrPower_Api::get_instance()->ping_server() );
+		remove_filter( 's4wp_connection_options', array( $this, '__change_solr_options' ) );
+	}
+
+	function test_optimize(){
+		$this->assertTrue(SolrPower_Api::get_instance()->optimize());
+	}
+
+	function test_optimize_bad(){
+		add_filter( 's4wp_connection_options', array( $this, '__change_solr_options' ) );
+		$this->assertFalse(SolrPower_Api::get_instance()->optimize());
+		remove_filter( 's4wp_connection_options', array( $this, '__change_solr_options' ) );
+	}
 	/**
 	 * Create a post and see if it gets indexed.
 	 */
