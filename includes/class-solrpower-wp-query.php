@@ -75,14 +75,14 @@ class SolrPower_WP_Query {
 	}
 
 	function posts_request( $request, $query ) {
-		if ( ! $query->is_search() ) {
+		if ( ! $query->is_search() && ! $query->get( 'solr_integrate' ) ) {
 			return $request;
 		}
 		$solr_options = SolrPower_Options::get_instance()->get_option();
 
 		$the_page = ( ! $query->get( 'paged' ) ) ? 1 : $query->get( 'paged' );
 
-		$qry    = $query->get( 's' );
+		$qry    = $this->build_query( $query );
 		$offset = $query->get( 'posts_per_page' ) * ( $the_page - 1 );
 		$count  = $query->get( 'posts_per_page' );
 		$fq     = $this->parse_facets( $query );
@@ -179,7 +179,7 @@ class SolrPower_WP_Query {
 		foreach ( $facets as $facet_name => $facet_arr ) {
 			$fq = array();
 			foreach ( $facet_arr as $facet ):
-				$fq[] = '"' . htmlspecialchars($facet) . '"';
+				$fq[] = '"' . htmlspecialchars( $facet ) . '"';
 			endforeach;
 			$return[] = $facet_name . ':(' . implode( ' OR ', $fq ) . ')';
 		}
@@ -189,6 +189,35 @@ class SolrPower_WP_Query {
 
 		return implode( ' ' . $default_operator . ' ', $return );
 
+	}
+
+	private function build_query( $query ) {
+		$ignore  = array(
+			'posts_per_page',
+			'comments_per_page',
+			'order',
+			'update_post_meta_cache',
+			'update_post_term_cache',
+			'cache_results',
+			'solr_integrate'
+		);
+		$convert = array(
+			'p'       => 'ID',
+			'page_id' => 'ID'
+		);
+		if ( ! $query->get( 'solr_integrate' ) ) {
+			return $query->get( 's' );
+		}
+		$solr_query = array();
+		foreach ( $query->query_vars as $var_key => $var_value ) {
+			if ( ! empty( $var_value ) && ! in_array( $var_key, $ignore ) ) {
+				$var_value    = ( is_array( $var_value ) ) ? '(' . implode( ' OR ', $var_value ) . ')' : $var_value;
+				$var_key      = ( isset( $convert[ $var_key ] ) ) ? $convert[ $var_key ] : $var_key;
+				$solr_query[] = $var_key . ':' . $var_value;
+			}
+		}
+
+		return implode( 'AND', $solr_query );
 	}
 }
 

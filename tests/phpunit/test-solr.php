@@ -520,4 +520,39 @@ class SolrTest extends WP_UnitTestCase {
 		wp_delete_category( $cat_id_two );
 	}
 
+	function test_wp_query_by_id() {
+		$post_id = $this->__create_test_post();
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate'   => true,
+			'p' => $post_id
+		);
+		$query = new WP_Query( $args );
+		$this->assertEquals( $post_id, $query->post->ID );
+	}
+
+	function test_wp_query_by_post_type() {
+		$post_id = $this->__create_test_post();
+		$page_id = $this->__create_test_post('page');
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate'   => true,
+			'post_type' => 'page'
+		);
+		$query = new WP_Query( $args );
+		$this->assertEquals( $page_id, $query->post->ID );
+	}
+
+	function test_wp_query_by_post_type_arr() {
+		$post_id = $this->__create_test_post();
+		$page_id = $this->__create_test_post('page');
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate'   => true,
+			'post_type' => array('page','post'),
+		);
+		$query = new WP_Query( $args );
+		$this->assertEquals( 2, $query->post_count );
+		$this->assertEquals( 2, $query->found_posts );
+	}
 }
