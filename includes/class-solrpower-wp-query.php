@@ -219,6 +219,10 @@ class SolrPower_WP_Query {
 
 		return implode( 'AND', $solr_query );
 	}
+
+	private function parse_tax_query($tax_query){
+
+	}
 }
 
 

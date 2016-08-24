@@ -555,4 +555,27 @@ class SolrTest extends WP_UnitTestCase {
 		$this->assertEquals( 2, $query->post_count );
 		$this->assertEquals( 2, $query->found_posts );
 	}
+
+
+	function test_wp_query_by_tax() {
+		$post_id = $this->__create_test_post();
+		$cat_id_one = wp_create_category( 'Term Slug' );
+
+		$p_id = $this->__create_test_post();
+		wp_set_object_terms( $p_id, $cat_id_one, 'category', true );
+
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate'   => true,
+			'tax_query' => array(
+				array(
+					'taxonomy' => 'category',
+					'terms'    => array( 'term-slug' ),
+					'field'    => 'slug',
+				),
+			),
+		);
+		$query = new WP_Query( $args );
+		$this->assertEquals( $post_id, $query->post->ID );
+	}
 }
