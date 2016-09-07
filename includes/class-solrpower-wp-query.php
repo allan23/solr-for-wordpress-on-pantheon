@@ -89,7 +89,8 @@ class SolrPower_WP_Query {
 
 		$the_page = ( ! $query->get( 'paged' ) ) ? 1 : $query->get( 'paged' );
 
-		$qry    = $this->build_query( $query );
+		$qry = $this->build_query( $query );
+		print_r( $qry );
 		$offset = $query->get( 'posts_per_page' ) * ( $the_page - 1 );
 		$count  = $query->get( 'posts_per_page' );
 		$fq     = $this->parse_facets( $query );
@@ -222,7 +223,9 @@ class SolrPower_WP_Query {
 			'update_post_term_cache',
 			'cache_results',
 			'solr_integrate',
-			'tax_query'
+			'tax_query',
+			'category_name',
+			'cat'
 		);
 		$convert = array(
 			'p'       => 'ID',
@@ -248,7 +251,26 @@ class SolrPower_WP_Query {
 	}
 
 	private function parse_tax_query( $tax_query ) {
+		$query    = array();
+		$relation = 'OR';
+		if ( isset( $tax_query['relation'] ) ) {
+			$relation = $tax_query['relation'];
+			unset( $tax_query['relation'] );
+		}
+		foreach ( $tax_query as $tax_key => $tax_value ) {
+			if ( ! is_array( $tax_value ) ) {
+				continue;
+			}
+			if ( 'category' === $tax_value['taxonomy'] ) {
+				$terms = array();
+				foreach ( $tax_value['terms'] as $term ) {
+					$terms[] = '"' . $term . '^^"';
+				}
+				$query[] = 'categories:(' . implode( 'OR', $terms ) . ')';
+			}
+		}
 
+		return implode( $relation, $query );
 	}
 }
 
