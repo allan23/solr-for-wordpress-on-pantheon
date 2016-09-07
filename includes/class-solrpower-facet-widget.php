@@ -207,7 +207,7 @@ class SolrPower_Facet_Widget extends WP_Widget {
 		$solr_options = solr_options();
 
 		if ( array_key_exists( $key, $solr_options )
-		     && false != $solr_options[ $key ]
+		     && false !== $solr_options[ $key ]
 		) {
 			return true;
 		}
@@ -216,12 +216,7 @@ class SolrPower_Facet_Widget extends WP_Widget {
 	}
 
 	function dummy_query() {
-		// For a wildcard search, lets change the parser to lucene.
-		add_filter( 'solr_query', function ( $query ) {
-			$query->addParam( 'defType', 'lucene' );
-
-			return $query;
-		} );
+		add_filter('solr_query',array(SolrPower_Api::get_instance(),'dismax_query'),10,2);
 		global $wp_query;
 		$query = new WP_Query();
 		if ( ! $wp_query->get( 's' ) ) {

@@ -20,7 +20,7 @@ class SolrTest extends WP_UnitTestCase {
 		SolrPower_Sync::get_instance()->delete_all();
 		// Setup options (if not already set)
 		$solr_options = solr_options();
-		if ( $solr_options['s4wp_solr_initialized'] != 1 ) {
+		if ( 1 !== $solr_options['s4wp_solr_initialized'] ) {
 			$options = SolrPower_Options::get_instance()->initalize_options();
 			update_option( 'plugin_s4wp_settings', $options );
 		}
@@ -47,6 +47,11 @@ class SolrTest extends WP_UnitTestCase {
 		}
 	}
 
+	/**
+	 * @param string $qry Search query.
+	 *
+	 * @return object
+	 */
 	function __run_test_query( $qry = 'solr' ) {
 		$offset = 0;
 		$count  = 10;
@@ -98,18 +103,9 @@ class SolrTest extends WP_UnitTestCase {
 	}
 
 
-	/**
-	 * By default, a wildcard query *:* will yield all results,
-	 * however if edismax is the set query parser it won't work.
-	 * Therefore, we hook into the solr_query filter to set the parser to lucene.
-	 */
+
 	function test_wildcard_search() {
 
-		add_filter( 'solr_query', function ( $query ) {
-			$query->addParam( 'defType', 'lucene' );
-
-			return $query;
-		} );
 		$this->__create_multiple( 5 );
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$search = $this->__run_test_query( '*:*' );
@@ -177,7 +173,7 @@ class SolrTest extends WP_UnitTestCase {
 	 * @global WP_Post $post
 	 */
 	function test_simple_wp_query() {
-		$post_id = $this->__create_test_post();
+		$this->__create_test_post();
 		$args    = array(
 			's' => 'solr'
 		);
@@ -236,6 +232,7 @@ class SolrTest extends WP_UnitTestCase {
 		$this->__create_test_post( 'page' );
 		$this->__create_test_post( 'page' );
 		$this->__create_multiple( 5 );
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$stats = SolrPower_Api::get_instance()->index_stats();
 		$this->assertEquals( 2, $stats['page'] );
 		$this->assertEquals( 5, $stats['post'] );
