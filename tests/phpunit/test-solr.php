@@ -103,7 +103,6 @@ class SolrTest extends WP_UnitTestCase {
 	}
 
 
-
 	function test_wildcard_search() {
 
 		$this->__create_multiple( 5 );
@@ -174,10 +173,10 @@ class SolrTest extends WP_UnitTestCase {
 	 */
 	function test_simple_wp_query() {
 		$this->__create_test_post();
-		$args    = array(
+		$args  = array(
 			's' => 'solr'
 		);
-		$query   = new WP_Query( $args );
+		$query = new WP_Query( $args );
 		$this->assertEquals( $query->post_count, 1 );
 		$this->assertEquals( $query->found_posts, 1 );
 		while ( $query->have_posts() ) {
@@ -521,8 +520,8 @@ class SolrTest extends WP_UnitTestCase {
 		$post_id = $this->__create_test_post();
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$args  = array(
-			'solr_integrate'   => true,
-			'p' => $post_id
+			'solr_integrate' => true,
+			'p'              => $post_id
 		);
 		$query = new WP_Query( $args );
 		$this->assertEquals( $post_id, $query->post->ID );
@@ -530,11 +529,11 @@ class SolrTest extends WP_UnitTestCase {
 
 	function test_wp_query_by_post_type() {
 		$post_id = $this->__create_test_post();
-		$page_id = $this->__create_test_post('page');
+		$page_id = $this->__create_test_post( 'page' );
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$args  = array(
-			'solr_integrate'   => true,
-			'post_type' => 'page'
+			'solr_integrate' => true,
+			'post_type'      => 'page'
 		);
 		$query = new WP_Query( $args );
 		$this->assertEquals( $page_id, $query->post->ID );
@@ -542,11 +541,11 @@ class SolrTest extends WP_UnitTestCase {
 
 	function test_wp_query_by_post_type_arr() {
 		$post_id = $this->__create_test_post();
-		$page_id = $this->__create_test_post('page');
+		$page_id = $this->__create_test_post( 'page' );
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$args  = array(
-			'solr_integrate'   => true,
-			'post_type' => array('page','post'),
+			'solr_integrate' => true,
+			'post_type'      => array( 'page', 'post' ),
 		);
 		$query = new WP_Query( $args );
 		$this->assertEquals( 2, $query->post_count );
@@ -555,7 +554,7 @@ class SolrTest extends WP_UnitTestCase {
 
 
 	function test_wp_query_by_tax() {
-		$post_id = $this->__create_test_post();
+		$this->__create_test_post();
 		$cat_id_one = wp_create_category( 'Term Slug' );
 
 		$p_id = $this->__create_test_post();
@@ -563,16 +562,16 @@ class SolrTest extends WP_UnitTestCase {
 
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$args  = array(
-			'solr_integrate'   => true,
-			'tax_query' => array(
+			'solr_integrate' => true,
+			'tax_query'      => array(
 				array(
 					'taxonomy' => 'category',
-					'terms'    => array( 'term-slug' ),
-					'field'    => 'slug',
+					'terms'    => array( 'Term Slug' ),
+					'field'    => 'name',
 				),
 			),
 		);
 		$query = new WP_Query( $args );
-		$this->assertEquals( $post_id, $query->post->ID );
+		$this->assertEquals( $p_id, $query->post->ID );
 	}
 }
