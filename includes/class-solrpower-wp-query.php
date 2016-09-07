@@ -16,7 +16,7 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Returned facets from search.
-	 * @var array
+	 * @var Solarium\QueryType\Select\Result\Facet\Field[] $facets
 	 */
 	var $facets = array();
 
@@ -74,10 +74,17 @@ class SolrPower_WP_Query {
 		add_filter( 'the_posts', array( $this, 'the_posts' ), 10, 2 );
 	}
 
+	/**
+	 * @param string $request SQL Query
+	 * @param WP_Query $query
+	 *
+	 * @return string
+	 */
 	function posts_request( $request, $query ) {
 		if ( ! $query->is_search() && ! $query->get( 'solr_integrate' ) ) {
 			return $request;
 		}
+		add_filter( 'solr_query', array( SolrPower_Api::get_instance(), 'dismax_query' ), 10, 2 );
 		$solr_options = SolrPower_Options::get_instance()->get_option();
 
 		$the_page = ( ! $query->get( 'paged' ) ) ? 1 : $query->get( 'paged' );
@@ -90,6 +97,7 @@ class SolrPower_WP_Query {
 
 		$order  = 'desc';
 		$search = SolrPower_Api::get_instance()->query( $qry, $offset, $count, $fq, $sortby, $order );
+
 		if ( is_null( $search ) ) {
 			return false;
 		}
@@ -115,19 +123,19 @@ class SolrPower_WP_Query {
 			$post = new stdClass();
 
 			foreach ( $post_array as $key => $value ) {
-				if ( 'displaydate' == $key ) {
+				if ( 'displaydate' === $key ) {
 					$post->post_date = $value;
 					continue;
 				}
-				if ( 'displaymodified' == $key ) {
+				if ( 'displaymodified' === $key ) {
 					$post->post_modified = $value;
 					continue;
 				}
-				if ( 'post_date' == $key || 'post_modified' == $key ) {
+				if ( 'post_date' === $key || 'post_modified' === $key ) {
 					continue;
 				}
 
-				if ( 'post_id' == $key ) {
+				if ( 'post_id' === $key ) {
 					$post->ID = $value;
 					continue;
 				}
@@ -145,6 +153,12 @@ class SolrPower_WP_Query {
 		return "SELECT * FROM $wpdb->posts WHERE 1=0";
 	}
 
+	/**
+	 * @param string $sql
+	 * @param WP_Query $query
+	 *
+	 * @return string
+	 */
 	function found_posts_query( $sql, $query ) {
 		if ( ! $query->is_search() ) {
 			return $sql;
@@ -165,6 +179,9 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Checks for 'facet' as WP_Query variable or query string and sets it up for a filter query.
+	 *
+	 * @param WP_Query $query
+	 *
 	 * @return array
 	 */
 	function parse_facets( $query ) {
@@ -191,6 +208,11 @@ class SolrPower_WP_Query {
 
 	}
 
+	/**
+	 * @param WP_Query $query
+	 *
+	 * @return string
+	 */
 	private function build_query( $query ) {
 		$ignore  = array(
 			'posts_per_page',
@@ -199,7 +221,8 @@ class SolrPower_WP_Query {
 			'update_post_meta_cache',
 			'update_post_term_cache',
 			'cache_results',
-			'solr_integrate'
+			'solr_integrate',
+			'tax_query'
 		);
 		$convert = array(
 			'p'       => 'ID',
@@ -210,6 +233,10 @@ class SolrPower_WP_Query {
 		}
 		$solr_query = array();
 		foreach ( $query->query_vars as $var_key => $var_value ) {
+			if ( 'tax_query' === $var_key ) {
+				$solr_query[] = $this->parse_tax_query( $var_value );
+				continue;
+			}
 			if ( ! empty( $var_value ) && ! in_array( $var_key, $ignore ) ) {
 				$var_value    = ( is_array( $var_value ) ) ? '(' . implode( ' OR ', $var_value ) . ')' : $var_value;
 				$var_key      = ( isset( $convert[ $var_key ] ) ) ? $convert[ $var_key ] : $var_key;
@@ -220,7 +247,7 @@ class SolrPower_WP_Query {
 		return implode( 'AND', $solr_query );
 	}
 
-	private function parse_tax_query($tax_query){
+	private function parse_tax_query( $tax_query ) {
 
 	}
 }
