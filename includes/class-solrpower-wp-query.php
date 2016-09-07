@@ -90,7 +90,7 @@ class SolrPower_WP_Query {
 		$the_page = ( ! $query->get( 'paged' ) ) ? 1 : $query->get( 'paged' );
 
 		$qry = $this->build_query( $query );
-		print_r( $qry );
+
 		$offset = $query->get( 'posts_per_page' ) * ( $the_page - 1 );
 		$count  = $query->get( 'posts_per_page' );
 		$fq     = $this->parse_facets( $query );
