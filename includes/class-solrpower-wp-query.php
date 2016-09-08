@@ -90,7 +90,7 @@ class SolrPower_WP_Query {
 		$the_page = ( ! $query->get( 'paged' ) ) ? 1 : $query->get( 'paged' );
 
 		$qry = $this->build_query( $query );
-
+		print_r($qry);
 		$offset = $query->get( 'posts_per_page' ) * ( $the_page - 1 );
 		$count  = $query->get( 'posts_per_page' );
 		$fq     = $this->parse_facets( $query );
@@ -225,7 +225,9 @@ class SolrPower_WP_Query {
 			'solr_integrate',
 			'tax_query',
 			'category_name',
-			'cat'
+			'cat',
+			'taxonomy',
+			'term_id'
 		);
 		$convert = array(
 			'p'       => 'ID',
@@ -267,7 +269,13 @@ class SolrPower_WP_Query {
 					$terms[] = '"' . $term . '^^"';
 				}
 				$query[] = 'categories:(' . implode( 'OR', $terms ) . ')';
+				continue;
 			}
+			$terms = array();
+			foreach ( $tax_value['terms'] as $term ) {
+				$terms[] = '"' . $term . '"';
+			}
+			$query[]=$tax_value['taxonomy'] . '_taxonomy:(' . implode('OR',$terms) . ')';
 		}
 
 		return implode( $relation, $query );
