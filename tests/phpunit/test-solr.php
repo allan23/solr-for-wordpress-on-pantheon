@@ -603,7 +603,7 @@ class SolrTest extends WP_UnitTestCase {
 			),
 		);
 		$query = new WP_Query( $args );
-		print_r($query);
+
 		$this->assertEquals( $p_id, $query->post->ID );
 	}
 
