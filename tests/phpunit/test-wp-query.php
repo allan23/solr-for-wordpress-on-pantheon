@@ -199,21 +199,24 @@ class SolrWPQueryTest extends WP_UnitTestCase {
 	}
 
 	function test_wp_query_meta() {
+
+		$this->__change_option( 's4wp_index_custom_fields', array( 'price' ) );
+
 		$post_one = $this->__create_test_post();
 		update_post_meta( $post_one, 'price', 33 );
 		$post_two = $this->__create_test_post();
 		update_post_meta( $post_two, 'price', 10 );
 		$post_three = $this->__create_test_post();
-		update_post_meta( $post_one, 'price', 76 );
+		update_post_meta( $post_three, 'price', 76 );
 
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$args  = array(
 			'solr_integrate' => true,
 			'meta_query'     => array(
 				array(
-					'key'=>'price',
-					'value'=>50,
-					'compare'=>'<='
+					'key'     => 'price',
+					'value'   => 50,
+					'compare' => '<='
 				)
 			),
 		);
@@ -221,4 +224,83 @@ class SolrWPQueryTest extends WP_UnitTestCase {
 		$this->assertEquals( 2, $query->post_count );
 	}
 
+	function test_wp_query_meta_two() {
+
+		$this->__change_option( 's4wp_index_custom_fields', array( 'price', 'has_discount' ) );
+		$post_one = $this->__create_test_post();
+		update_post_meta( $post_one, 'price', 33 );
+		update_post_meta( $post_one, 'has_discount', false );
+		$post_two = $this->__create_test_post();
+		update_post_meta( $post_two, 'price', 10 );
+		update_post_meta( $post_two, 'has_discount', true );
+		$post_three = $this->__create_test_post();
+		update_post_meta( $post_three, 'price', 76 );
+		update_post_meta( $post_three, 'has_discount', false );
+
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate' => true,
+			'meta_query'     => array(
+				'relation' => 'AND',
+				array(
+					'key'     => 'price',
+					'value'   => 50,
+					'compare' => '<='
+				),
+				array(
+					'key'   => 'has_discount',
+					'value' => 1
+				)
+			),
+		);
+		$query = new WP_Query( $args );
+		$this->assertEquals( 1, $query->post_count );
+	}
+
+	function test_wp_query_meta_three() {
+
+		$this->__change_option( 's4wp_index_custom_fields', array( 'price', 'has_discount','color' ) );
+		$post_one = $this->__create_test_post();
+		update_post_meta( $post_one, 'price', 33 );
+		update_post_meta( $post_one, 'has_discount', false );
+		update_post_meta( $post_one, 'color', 'red' );
+		$post_two = $this->__create_test_post();
+		update_post_meta( $post_two, 'price', 10 );
+		update_post_meta( $post_two, 'has_discount', true );
+		update_post_meta( $post_two, 'color', 'red' );
+		$post_three = $this->__create_test_post();
+		update_post_meta( $post_three, 'price', 76 );
+		update_post_meta( $post_three, 'has_discount', false );
+		update_post_meta( $post_three, 'color', 'green' );
+
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate' => true,
+			'meta_query'     => array(
+				'relation' => 'AND',
+				array(
+					'relation' => 'AND',
+					array(
+						'key'     => 'price',
+						'value'   => 32,
+						'compare' => '<='
+					),
+					array(
+						'key'   => 'has_discount',
+						'value' => 1
+					)
+
+				),
+				array(
+					array(
+						'key'     => 'color',
+						'value'   => 'red',
+					)
+				)
+
+			),
+		);
+		$query = new WP_Query( $args );
+		$this->assertEquals( 1, $query->post_count );
+	}
 }

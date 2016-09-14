@@ -371,7 +371,7 @@ class SolrPower_Api {
 			$query->setQueryDefaultOperator( $default_operator );
 
 			// Wildcards.
-			if ( '*:*' === trim( $query->getQuery() ) ) {
+			if ( strstr( $query->getQuery(), '*:*' )  ) {
 				$dismax->setQueryAlternative( $query->getQuery() );
 				$query->setQuery( '' );
 			}
@@ -438,7 +438,7 @@ class SolrPower_Api {
 	private function fetch_stat( $type ) {
 		// Can't do wildcard with dismax...
 
-		add_filter( 'solr_query', array($this,'dismax_query'), 10, 2 );
+		add_filter( 'solr_query', array( $this, 'dismax_query' ), 10, 2 );
 		$qry    = 'post_type:' . $type;
 		$offset = 0;
 		$count  = 1;
@@ -515,6 +515,7 @@ class SolrPower_Api {
 	function dismax_query( $query, $dismax ) {
 		$dismax->setQueryAlternative( $query->getQuery() );
 		$query->setQuery( '' );
+
 		return $query;
 	}
 }
