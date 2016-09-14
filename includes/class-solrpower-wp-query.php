@@ -227,7 +227,9 @@ class SolrPower_WP_Query {
 			'category_name',
 			'cat',
 			'taxonomy',
-			'term_id'
+			'term_id',
+			'meta_query', // Ignore for now.
+			'lazy_load_term_meta'
 		);
 		$convert = array(
 			'p'       => 'ID',
@@ -242,10 +244,15 @@ class SolrPower_WP_Query {
 				$solr_query[] = $this->parse_tax_query( $var_value );
 				continue;
 			}
+			if ( 'meta_query' === $var_key ) {
+				$solr_query[] = $this->parse_meta_query( $var_value );
+				continue;
+			}
+
 			if ( ! empty( $var_value ) && ! in_array( $var_key, $ignore ) ) {
 				$var_value    = ( is_array( $var_value ) ) ? '(' . implode( ' OR ', $var_value ) . ')' : $var_value;
 				$var_key      = ( isset( $convert[ $var_key ] ) ) ? $convert[ $var_key ] : $var_key;
-				$solr_query[] = $var_key . ':' . $var_value;
+				$solr_query[] = '(' . $var_key . ':' . $var_value . ')';
 			}
 		}
 
@@ -281,10 +288,14 @@ class SolrPower_WP_Query {
 			foreach ( $tax_value['terms'] as $term ) {
 				$terms[] = '"' . $term . '"';
 			}
-			$query[]=$tax_value['taxonomy'] . '_taxonomy:(' . implode('OR',$terms) . ')';
+			$query[] = $tax_value['taxonomy'] . '_taxonomy:(' . implode( 'OR', $terms ) . ')';
 		}
 
 		return implode( $relation, $query );
+	}
+
+	private function parse_meta_query( $meta_query ) {
+
 	}
 }
 
