@@ -294,7 +294,46 @@ class SolrPower_WP_Query {
 		return implode( $relation, $query );
 	}
 
+	/**
+	 * @param $meta_query
+	 *
+	 * @return string
+	 * @todo Advanced meta_query (comparisons, etc.).
+	 */
 	private function parse_meta_query( $meta_query ) {
+		$query    = array();
+		$relation = 'OR';
+		if ( isset( $meta_query['relation'] ) ) {
+			$relation = $meta_query['relation'];
+			unset( $meta_query['relation'] );
+		}
+		foreach ( $meta_query as $meta_key => $meta_value ) {
+			if ( ! is_array( $meta_value ) ) {
+				continue;
+			}
+			if ( isset( $meta_value[0]['key'] ) ) {
+				$query[]  = $this->parse_meta_query( $meta_value );
+				continue;
+			}
+			$compare = '=';
+			if ( isset( $meta_value['compare'] ) ) {
+				$compare = $meta_value['compare'];
+			}
+			switch ( $compare ) {
+				case '<=':
+					$query[] = '(' . $meta_value['key'] . '_str:[* TO ' . $meta_value['value'] . '])';
+					break;
+				case '>=':
+					$query[] = '(' . $meta_value['key'] . '_str:[' . $meta_value['value'] . ' TO *])';
+					break;
+
+				default:
+					$query[] = '(' . $meta_value['key'] . '_str:"' . $meta_value['value'] . '")';
+					break;
+			}
+		}
+
+		return '(' . implode( $relation, $query ) . ')';
 
 	}
 }
