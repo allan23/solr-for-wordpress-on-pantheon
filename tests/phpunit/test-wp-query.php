@@ -1,6 +1,11 @@
 <?php
 
 class SolrWPQueryTest extends WP_UnitTestCase {
+	/**
+	 * @var integer Term ID of custom taxonomy term.
+	 */
+	var $term_id;
+
 	function __construct() {
 		parent::__construct();
 		// For tests, we're not using https.
@@ -57,6 +62,8 @@ class SolrWPQueryTest extends WP_UnitTestCase {
 
 		// Create 'Horror' genre
 		wp_insert_term( 'Horror', 'genre' );
+		$term          = get_term_by( 'slug', 'horror', 'genre' );
+		$this->term_id = $term->term_id;
 	}
 
 
@@ -176,6 +183,49 @@ class SolrWPQueryTest extends WP_UnitTestCase {
 		$this->assertEquals( $p_id, $query->post->ID );
 	}
 
+	function test_wp_query_by_tax_slug() {
+		$this->__create_test_post();
+
+		$p_id = $this->__create_test_post();
+		wp_set_object_terms( $p_id, 'Horror', 'genre', true );
+
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate' => true,
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'genre',
+					'terms'    => array( 'horror' ),
+					'field'    => 'slug',
+				),
+			),
+		);
+		$query = new WP_Query( $args );
+		$this->assertEquals( $p_id, $query->post->ID );
+	}
+
+	function test_wp_query_by_tax_id() {
+		$this->__create_test_post();
+
+		$p_id = $this->__create_test_post();
+		wp_set_object_terms( $p_id, 'Horror', 'genre', true );
+
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate' => true,
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'genre',
+					'terms'    => array( $this->term_id ),
+					'field'    => 'id',
+				),
+			),
+		);
+		$query = new WP_Query( $args );
+
+		$this->assertEquals( $p_id, $query->post->ID );
+	}
+
 	function test_wp_query_by_tax_cat() {
 		$this->__create_test_post();
 		$cat_id_one = wp_create_category( 'Term Slug' );
@@ -191,6 +241,51 @@ class SolrWPQueryTest extends WP_UnitTestCase {
 					'taxonomy' => 'category',
 					'terms'    => array( 'Term Slug' ),
 					'field'    => 'name',
+				),
+			),
+		);
+		$query = new WP_Query( $args );
+		$this->assertEquals( $p_id, $query->post->ID );
+	}
+
+	function test_wp_query_by_tax_cat_slug() {
+		$this->__create_test_post();
+		$cat_id_one = wp_create_category( 'Term Slug' );
+
+		$p_id = $this->__create_test_post();
+		wp_set_object_terms( $p_id, $cat_id_one, 'category', true );
+
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate' => true,
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'category',
+					'terms'    => array( 'term-slug' ),
+					'field'    => 'slug',
+				),
+			),
+		);
+		$query = new WP_Query( $args );
+
+		$this->assertEquals( $p_id, $query->post->ID );
+	}
+
+	function test_wp_query_by_tax_cat_id() {
+		$this->__create_test_post();
+		$cat_id_one = wp_create_category( 'Term Slug' );
+
+		$p_id = $this->__create_test_post();
+		wp_set_object_terms( $p_id, $cat_id_one, 'category', true );
+
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate' => true,
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'category',
+					'terms'    => array( $cat_id_one ),
+					'field'    => 'id',
 				),
 			),
 		);
@@ -259,7 +354,7 @@ class SolrWPQueryTest extends WP_UnitTestCase {
 
 	function test_wp_query_meta_three() {
 
-		$this->__change_option( 's4wp_index_custom_fields', array( 'price', 'has_discount','color' ) );
+		$this->__change_option( 's4wp_index_custom_fields', array( 'price', 'has_discount', 'color' ) );
 		$post_one = $this->__create_test_post();
 		update_post_meta( $post_one, 'price', 33 );
 		update_post_meta( $post_one, 'has_discount', false );
@@ -293,8 +388,8 @@ class SolrWPQueryTest extends WP_UnitTestCase {
 				),
 				array(
 					array(
-						'key'     => 'color',
-						'value'   => 'red',
+						'key'   => 'color',
+						'value' => 'red',
 					)
 				)
 
@@ -302,5 +397,31 @@ class SolrWPQueryTest extends WP_UnitTestCase {
 		);
 		$query = new WP_Query( $args );
 		$this->assertEquals( 1, $query->post_count );
+	}
+
+	function test_wp_query_date() {
+
+		$post_one = $this->__create_test_post();
+		wp_update_post( array( 'ID' => $post_one, 'post_date' => '2010-06-20' ) );
+		$post_two = $this->__create_test_post();
+		wp_update_post( array( 'ID' => $post_two, 'post_date' => '2015-06-20' ) );
+		$post_three = $this->__create_test_post();
+
+
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$args  = array(
+			'solr_integrate' => true,
+			'date_query'     => array(
+				array(
+					'year'  => '2015',
+					'month' => '06',
+					'day'   => '20'
+				)
+			)
+		);
+		$query = new WP_Query( $args );
+		print_r( $query->date_query->get_sql() );
+		print_r( SolrPower_WP_Query::get_instance()->qry );
+		$this->assertEquals( $post_two, $query->post->ID );
 	}
 }

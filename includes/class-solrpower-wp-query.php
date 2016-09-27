@@ -20,6 +20,8 @@ class SolrPower_WP_Query {
 	 */
 	var $facets = array();
 
+	var $qry;
+
 	/**
 	 * Grab instance of object.
 	 * @return SolrPower_WP_Query
@@ -89,12 +91,12 @@ class SolrPower_WP_Query {
 
 		$the_page = ( ! $query->get( 'paged' ) ) ? 1 : $query->get( 'paged' );
 
-		$qry = $this->build_query( $query );
-
-		$offset = $query->get( 'posts_per_page' ) * ( $the_page - 1 );
-		$count  = $query->get( 'posts_per_page' );
-		$fq     = $this->parse_facets( $query );
-		$sortby = ( isset( $solr_options['s4wp_default_sort'] ) && ! empty( $solr_options['s4wp_default_sort'] ) ) ? $solr_options['s4wp_default_sort'] : 'score';
+		$qry       = $this->build_query( $query );
+		$this->qry = $qry;
+		$offset    = $query->get( 'posts_per_page' ) * ( $the_page - 1 );
+		$count     = $query->get( 'posts_per_page' );
+		$fq        = $this->parse_facets( $query );
+		$sortby    = ( isset( $solr_options['s4wp_default_sort'] ) && ! empty( $solr_options['s4wp_default_sort'] ) ) ? $solr_options['s4wp_default_sort'] : 'score';
 
 		$order  = 'desc';
 		$search = SolrPower_Api::get_instance()->query( $qry, $offset, $count, $fq, $sortby, $order );
@@ -229,7 +231,8 @@ class SolrPower_WP_Query {
 			'taxonomy',
 			'term_id',
 			'meta_query', // Ignore for now.
-			'lazy_load_term_meta'
+			'lazy_load_term_meta',
+			'term'
 		);
 		$convert = array(
 			'p'       => 'ID',
@@ -238,7 +241,11 @@ class SolrPower_WP_Query {
 		if ( ! $query->get( 'solr_integrate' ) ) {
 			return $query->get( 's' );
 		}
+
 		$solr_query = array();
+		if ( $query->is_date() ) {
+			$solr_query[] = $this->parse_date_query( $query->query_vars );
+		}
 		foreach ( $query->query_vars as $var_key => $var_value ) {
 			if ( 'tax_query' === $var_key ) {
 				$solr_query[] = $this->parse_tax_query( $var_value );
@@ -279,16 +286,44 @@ class SolrPower_WP_Query {
 			if ( 'category' === $tax_value['taxonomy'] ) {
 				$terms = array();
 				foreach ( $tax_value['terms'] as $term ) {
-					$terms[] = '"' . $term . '^^"';
+					if ( isset( $tax_value['field'] )
+					     && ( 'slug' === $tax_value['field'] || 'id' === $tax_value['field'] )
+					) {
+						$terms[] = '"' . $term . '"';
+					} else {
+						$terms[] = '"' . $term . '^^"';
+					}
 				}
-				$query[] = 'categories:(' . implode( 'OR', $terms ) . ')';
+				switch ( $tax_value['field'] ) {
+					case 'slug':
+						$query[] = 'categories_slug:(' . implode( 'OR', $terms ) . ')';
+						break;
+					case 'id':
+						$query[] = 'categories_id:(' . implode( 'OR', $terms ) . ')';
+						break;
+					default:
+						$query[] = 'categories:(' . implode( 'OR', $terms ) . ')';
+						break;
+				}
+
 				continue;
 			}
 			$terms = array();
 			foreach ( $tax_value['terms'] as $term ) {
 				$terms[] = '"' . $term . '"';
 			}
-			$query[] = $tax_value['taxonomy'] . '_taxonomy:(' . implode( 'OR', $terms ) . ')';
+			switch ( $tax_value['field'] ) {
+				case 'slug':
+					$query[] = $tax_value['taxonomy'] . '_taxonomy_slug:(' . implode( 'OR', $terms ) . ')';
+					break;
+				case 'id':
+					$query[] = $tax_value['taxonomy'] . '_taxonomy_id:(' . implode( 'OR', $terms ) . ')';
+					break;
+				default:
+					$query[] = $tax_value['taxonomy'] . '_taxonomy:(' . implode( 'OR', $terms ) . ')';
+					break;
+			}
+
 		}
 
 		return implode( $relation, $query );
@@ -312,7 +347,7 @@ class SolrPower_WP_Query {
 				continue;
 			}
 			if ( isset( $meta_value[0]['key'] ) ) {
-				$query[]  = $this->parse_meta_query( $meta_value );
+				$query[] = $this->parse_meta_query( $meta_value );
 				continue;
 			}
 			$compare = '=';
@@ -334,6 +369,10 @@ class SolrPower_WP_Query {
 		}
 
 		return '(' . implode( $relation, $query ) . ')';
+
+	}
+
+	function parse_date_query( $query_vars ) {
 
 	}
 }
