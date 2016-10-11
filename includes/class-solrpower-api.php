@@ -250,13 +250,13 @@ class SolrPower_Api {
 	 *
 	 * @return Solarium\QueryType\Select\Result\Result
 	 */
-	function query( $qry, $offset, $count, $fq, $sortby, $order, $server = 'master' ) {
+	function query( $qry, $offset, $count, $fq, $sortby, $order, $fields = null ) {
 		//NOTICE: does this needs to be cached to stop the db being hit to grab the options everytime search is being done.
 		$plugin_s4wp_settings = solr_options();
 
 		$solr = get_solr();
 
-		return $this->master_query( $solr, $qry, $offset, $count, $fq, $sortby, $order, $plugin_s4wp_settings );
+		return $this->master_query( $solr, $qry, $offset, $count, $fq, $sortby, $order, $plugin_s4wp_settings, $fields );
 	}
 
 	/**
@@ -271,7 +271,7 @@ class SolrPower_Api {
 	 *
 	 * @return Solarium\QueryType\Select\Result\Result
 	 */
-	function master_query( $solr, $qry, $offset, $count, $fq, $sortby, $order, &$plugin_s4wp_settings ) {
+	function master_query( $solr, $qry, $offset, $count, $fq, $sortby, $order, &$plugin_s4wp_settings, $fields = null ) {
 		$this->add_log( array(
 			'Search Query' => $qry,
 			'Offset'       => $offset,
@@ -371,7 +371,7 @@ class SolrPower_Api {
 			$query->setQueryDefaultOperator( $default_operator );
 
 			// Wildcards.
-			if ( strstr( $query->getQuery(), '*:*' )  ) {
+			if ( strstr( $query->getQuery(), '*:*' ) ) {
 				$dismax->setQueryAlternative( $query->getQuery() );
 				$query->setQuery( '' );
 			}
