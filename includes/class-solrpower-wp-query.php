@@ -19,11 +19,17 @@ class SolrPower_WP_Query {
 	 * @var Solarium\QueryType\Select\Result\Facet\Field[] $facets
 	 */
 	var $facets = array();
-
+	/**
+	 * @var string Query being sent to Solr.
+	 */
 	var $qry;
-
+	/**
+	 * @var array Response from Solr.
+	 */
 	var $search;
-
+	/**
+	 * @var array Additional filter queries being sent to Solr.
+	 */
 	var $fq = array();
 
 	/**
@@ -39,10 +45,16 @@ class SolrPower_WP_Query {
 		return self::$instance;
 	}
 
+	/**
+	 * SolrPower_WP_Query constructor.
+	 */
 	function __construct() {
 
 	}
 
+	/**
+	 * SolrPower_WP_Query instance initial setup method.
+	 */
 	function setup() {
 		// We don't want to do a Solr query if we're doing AJAX or in the admin area.
 
@@ -80,6 +92,9 @@ class SolrPower_WP_Query {
 		add_filter( 'the_posts', array( $this, 'the_posts' ), 10, 2 );
 	}
 
+	/**
+	 * Reset the variables in the object to avoid issues with future queries.
+	 */
 	function reset_vars() {
 		$this->fq  = array();
 		$this->qry = '';
@@ -167,6 +182,12 @@ class SolrPower_WP_Query {
 		return "SELECT * FROM $wpdb->posts WHERE 1=0";
 	}
 
+	/**
+	 * Converts Solr results to WP_Posts.
+	 * @param array $search Solr results array.
+	 *
+	 * @return array
+	 */
 	private function parse_results( $search ) {
 		$posts = array();
 
@@ -201,9 +222,14 @@ class SolrPower_WP_Query {
 
 	}
 
+	/**
+	 * Converts the orderby to a Solr-friendly sortby.
+	 * @param string|array $orderby
+	 * @param WP_Query $query
+	 *
+	 * @return string
+	 */
 	private function parse_orderby( $orderby, $query ) {
-
-
 		// Used to filter values.
 		$allowed_keys = array(
 			'post_name',
@@ -304,6 +330,12 @@ class SolrPower_WP_Query {
 		return '';
 	}
 
+	/**
+	 * @param array $posts
+	 * @param WP_Query $query
+	 *
+	 * @return mixed
+	 */
 	function the_posts( $posts, &$query ) {
 		if ( ! isset( $this->found_posts[ spl_object_hash( $query ) ] ) ) {
 			return $posts;
@@ -356,6 +388,7 @@ class SolrPower_WP_Query {
 	}
 
 	/**
+	 * Parses WP_Query variables to a Solr query.
 	 * @param WP_Query $query
 	 *
 	 * @return string
@@ -407,6 +440,7 @@ class SolrPower_WP_Query {
 	}
 
 	/**
+	 * Parses tax queries to Solr.
 	 * @param array $tax_query
 	 *
 	 * @return string
@@ -470,10 +504,10 @@ class SolrPower_WP_Query {
 	}
 
 	/**
-	 * @param $meta_query
+	 * Parses meta queries to Solr.
+	 * @param array $meta_query
 	 *
 	 * @return string
-	 * @todo Advanced meta_query (comparisons, etc.).
 	 */
 	private function parse_meta_query( $meta_query ) {
 		$options      = solr_options();
@@ -623,12 +657,19 @@ class SolrPower_WP_Query {
 
 	}
 
+	/**
+	 * Determines the dynamic field type based on the meta_type specified.
+	 * @param array $meta_value
+	 * @param bool $orderby
+	 *
+	 * @return string
+	 */
 	private function meta_type( $meta_value, $orderby = false ) {
 		if ( ! isset( $meta_value['type'] ) ) {
 			if ( isset( $meta_value['value'] ) && is_numeric( $meta_value['value'] ) ) {
 				return 'i';
 			}
-
+			// if $orderby is true, set the dynamic field type as *_s since it is not multivalued in schema.
 			return ( $orderby ) ? 's' : 'str';
 		}
 		switch ( true ) {
@@ -649,6 +690,13 @@ class SolrPower_WP_Query {
 		}
 	}
 
+	/**
+	 * Sets query value formatting based on type.
+	 * @param string $value
+	 * @param null|string $type
+	 *
+	 * @return float|int|string
+	 */
 	private function set_query_value( $value, $type = null ) {
 
 		if ( '*' === $value ) {
@@ -667,10 +715,6 @@ class SolrPower_WP_Query {
 				break;
 		}
 
-
-	}
-
-	function parse_date_query( $query_vars ) {
 
 	}
 }
