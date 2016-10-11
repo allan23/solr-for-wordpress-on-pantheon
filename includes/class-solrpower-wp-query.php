@@ -22,6 +22,10 @@ class SolrPower_WP_Query {
 
 	var $qry;
 
+	var $search;
+
+	var $fq = array();
+
 	/**
 	 * Grab instance of object.
 	 * @return SolrPower_WP_Query
@@ -49,7 +53,7 @@ class SolrPower_WP_Query {
 			 *
 			 * By default the plugin won't query Solr on AJAX requests. Set to true to override
 			 *
-			 * @param bool $solr_allor_ajax True to query on AJAX or false [default false].
+			 * @param bool $solr_allow_ajax True to query on AJAX or false [default false].
 			 */
 			if ( false === apply_filters( 'solr_allow_ajax', false ) ) {
 				return;
@@ -76,6 +80,11 @@ class SolrPower_WP_Query {
 		add_filter( 'the_posts', array( $this, 'the_posts' ), 10, 2 );
 	}
 
+	function reset_vars() {
+		$this->fq  = array();
+		$this->qry = '';
+	}
+
 	/**
 	 * @param string $request SQL Query
 	 * @param WP_Query $query
@@ -91,15 +100,44 @@ class SolrPower_WP_Query {
 
 		$the_page = ( ! $query->get( 'paged' ) ) ? 1 : $query->get( 'paged' );
 
-		$qry       = $this->build_query( $query );
+		$qry = $this->build_query( $query );
+		if ( '' === $qry ) { // If we don't have anything to query, let's do a wildcard.
+			$qry = '*';
+		}
 		$this->qry = $qry;
 		$offset    = $query->get( 'posts_per_page' ) * ( $the_page - 1 );
 		$count     = $query->get( 'posts_per_page' );
 		$fq        = $this->parse_facets( $query );
 		$sortby    = ( isset( $solr_options['s4wp_default_sort'] ) && ! empty( $solr_options['s4wp_default_sort'] ) ) ? $solr_options['s4wp_default_sort'] : 'score';
+		$order     = ( $query->get( 'order', false ) ) ? strtolower( $query->get( 'order' ) ) : 'desc';
+		if ( $query->get( 'orderby', false ) ) {
+			$orderby = $query->get( 'orderby' );
 
-		$order  = 'desc';
-		$search = SolrPower_Api::get_instance()->query( $qry, $offset, $count, $fq, $sortby, $order );
+			if ( is_array( $orderby ) ) {
+				$new_order = array();
+				foreach ( $orderby as $order_key => $order_val ) {
+					$new_order[] = $this->parse_orderby( $order_key, $query ) . ' ' . strtolower( $order_val );
+				}
+				$sortby = implode( ',', $new_order );
+				$order  = false;
+			} else {
+				$sortby = $this->parse_orderby( $orderby, $query );
+			}
+		}
+
+
+		$fields = null;
+		switch ( $query->get( 'fields' ) ) {
+			case 'ids':
+				$fields = 'ID';
+				break;
+			default:
+				$fields = null;
+				break;
+		}
+		$query->set( 'fields', '' );
+		unset( $query->query['fields'] );
+		$search = SolrPower_Api::get_instance()->query( $qry, $offset, $count, $fq, $sortby, $order, $fields );
 
 		if ( is_null( $search ) ) {
 			return false;
@@ -120,6 +158,16 @@ class SolrPower_WP_Query {
 			'Query Time'    => $search_header['QTime'] . 'ms'
 		) );
 
+		$posts = $this->parse_results( $search );
+
+		$this->found_posts[ spl_object_hash( $query ) ] = $posts;
+		$this->reset_vars();
+		global $wpdb;
+
+		return "SELECT * FROM $wpdb->posts WHERE 1=0";
+	}
+
+	private function parse_results( $search ) {
 		$posts = array();
 
 		foreach ( $search['docs'] as $post_array ) {
@@ -149,11 +197,97 @@ class SolrPower_WP_Query {
 			$posts[]    = $post;
 		}
 
-		$this->found_posts[ spl_object_hash( $query ) ] = $posts;
+		return $posts;
 
-		global $wpdb;
+	}
 
-		return "SELECT * FROM $wpdb->posts WHERE 1=0";
+	private function parse_orderby( $orderby, $query ) {
+
+
+		// Used to filter values.
+		$allowed_keys = array(
+			'post_name',
+			'post_author',
+			'post_date',
+			'post_title',
+			'post_modified',
+			'post_parent',
+			'post_type',
+			'name',
+			'author',
+			'date',
+			'title',
+			'modified',
+			'parent',
+			'type',
+			'ID',
+			'menu_order',
+			'comment_count',
+			'rand',
+		);
+
+		$primary_meta_key   = '';
+		$primary_meta_query = false;
+		$meta_clauses       = $query->meta_query->get_clauses();
+		if ( ! empty( $meta_clauses ) ) {
+			$primary_meta_query = reset( $meta_clauses );
+
+			if ( ! empty( $primary_meta_query['key'] ) ) {
+				$primary_meta_key = $primary_meta_query['key'];
+				$allowed_keys[]   = $primary_meta_key;
+			}
+
+			$allowed_keys[] = 'meta_value';
+			$allowed_keys[] = 'meta_value_num';
+			$allowed_keys   = array_merge( $allowed_keys, array_keys( $meta_clauses ) );
+		}
+
+		if ( ! in_array( $orderby, $allowed_keys ) ) {
+			return false;
+		}
+
+		switch ( $orderby ) {
+			case 'post_name':
+			case 'post_author':
+			case 'post_date':
+			case 'post_title':
+			case 'post_modified':
+			case 'post_parent':
+			case 'post_type':
+			case 'ID':
+			case 'menu_order':
+			case 'comment_count':
+				$orderby_clause = $orderby;
+				break;
+			case 'rand':
+				$orderby_clause = 'random';
+				break;
+			case $primary_meta_key:
+			case 'meta_value':
+				if ( ! empty( $primary_meta_query['type'] ) ) {
+					$orderby_clause = "{$primary_meta_query['key']}_{$this->meta_type(array('type'=>$primary_meta_query['cast']),true)}";
+				} else {
+					$orderby_clause = "{$primary_meta_query['key']}_s";
+				}
+				break;
+			case 'meta_value_num':
+				$orderby_clause = "{$primary_meta_query['alias']}_i";
+				break;
+			default:
+				if ( array_key_exists( $orderby, $meta_clauses ) ) {
+					// $orderby corresponds to a meta_query clause.
+					$meta_clause    = $meta_clauses[ $orderby ];
+					$orderby_clause = "{$meta_clause['key']}_{$this->meta_type(array('type'=>$meta_clause['cast']),true)}";
+				} else {
+					// Default: order by post field.
+					$orderby_clause = "post_" . sanitize_key( $orderby );
+				}
+
+				break;
+		}
+
+
+		return $orderby_clause;
 	}
 
 	/**
@@ -188,11 +322,20 @@ class SolrPower_WP_Query {
 	 * @return array
 	 */
 	function parse_facets( $query ) {
+		$plugin_s4wp_settings = solr_options();
+		$default_operator     = ( isset( $plugin_s4wp_settings['s4wp_default_operator'] ) ) ? $plugin_s4wp_settings['s4wp_default_operator'] : 'OR';
+
 		$facets = $query->get( 'facet' );
 		if ( ! $facets ) {
 			$facets = filter_input( INPUT_GET, 'facet', FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY );
 		}
 		if ( ! $facets ) {
+			if ( is_array( $this->fq ) && ! empty( $this->fq ) ) {
+				$return = $this->fq;
+
+				return implode( ' ' . $default_operator . ' ', $return );
+			}
+
 			return array();
 		}
 		$return = array();
@@ -203,9 +346,10 @@ class SolrPower_WP_Query {
 			endforeach;
 			$return[] = $facet_name . ':(' . implode( ' OR ', $fq ) . ')';
 		}
-		$plugin_s4wp_settings = solr_options();
 
-		$default_operator = ( isset( $plugin_s4wp_settings['s4wp_default_operator'] ) ) ? $plugin_s4wp_settings['s4wp_default_operator'] : 'OR';
+
+		// Additional Filter Query:
+		$return = array_merge( $return, $this->fq );
 
 		return implode( ' ' . $default_operator . ' ', $return );
 
@@ -217,26 +361,19 @@ class SolrPower_WP_Query {
 	 * @return string
 	 */
 	private function build_query( $query ) {
-		$ignore  = array(
-			'posts_per_page',
-			'comments_per_page',
-			'order',
-			'update_post_meta_cache',
-			'update_post_term_cache',
-			'cache_results',
-			'solr_integrate',
-			'tax_query',
-			'category_name',
-			'cat',
-			'taxonomy',
-			'term_id',
-			'meta_query', // Ignore for now.
-			'lazy_load_term_meta',
-			'term'
+		$whitelist = array(
+			'post_type',
+			'p',
+			'page_id',
+			'post_status',
+			'post_parent',
+			'name'
+
 		);
-		$convert = array(
+		$convert   = array(
 			'p'       => 'ID',
-			'page_id' => 'ID'
+			'page_id' => 'ID',
+			'name'    => 'post_name'
 		);
 		if ( ! $query->get( 'solr_integrate' ) ) {
 			return $query->get( 's' );
@@ -246,17 +383,20 @@ class SolrPower_WP_Query {
 		if ( $query->is_date() ) {
 			$solr_query[] = $this->parse_date_query( $query->query_vars );
 		}
+
+		if ( ! empty( $query->meta_query->queries ) ) {
+			$solr_query[] = $this->parse_meta_query( $query->meta_query->queries );
+		}
 		foreach ( $query->query_vars as $var_key => $var_value ) {
 			if ( 'tax_query' === $var_key ) {
 				$solr_query[] = $this->parse_tax_query( $var_value );
 				continue;
 			}
-			if ( 'meta_query' === $var_key ) {
-				$solr_query[] = $this->parse_meta_query( $var_value );
+
+			if ( 'post_type' === $var_key && 'any' === $var_value ) {
 				continue;
 			}
-
-			if ( ! empty( $var_value ) && ! in_array( $var_key, $ignore ) ) {
+			if ( ! empty( $var_value ) && in_array( $var_key, $whitelist ) ) {
 				$var_value    = ( is_array( $var_value ) ) ? '(' . implode( ' OR ', $var_value ) . ')' : $var_value;
 				$var_key      = ( isset( $convert[ $var_key ] ) ) ? $convert[ $var_key ] : $var_key;
 				$solr_query[] = '(' . $var_key . ':' . $var_value . ')';
@@ -336,12 +476,15 @@ class SolrPower_WP_Query {
 	 * @todo Advanced meta_query (comparisons, etc.).
 	 */
 	private function parse_meta_query( $meta_query ) {
-		$query    = array();
-		$relation = 'OR';
+		$options      = solr_options();
+		$indexed_keys = $options['s4wp_index_custom_fields'];
+		$query        = array();
+		$relation     = 'AND'; // AND is default in core.
 		if ( isset( $meta_query['relation'] ) ) {
 			$relation = $meta_query['relation'];
 			unset( $meta_query['relation'] );
 		}
+		$wildcards_used = array();
 		foreach ( $meta_query as $meta_key => $meta_value ) {
 			if ( ! is_array( $meta_value ) ) {
 				continue;
@@ -354,21 +497,176 @@ class SolrPower_WP_Query {
 			if ( isset( $meta_value['compare'] ) ) {
 				$compare = $meta_value['compare'];
 			}
+			$type = $this->meta_type( $meta_value );
 			switch ( $compare ) {
 				case '<=':
-					$query[] = '(' . $meta_value['key'] . '_str:[* TO ' . $meta_value['value'] . '])';
+					$query[] = '(' . $meta_value['key'] . '_' . $type . ':[* TO ' . $this->set_query_value( $meta_value['value'], $type ) . '])';
 					break;
 				case '>=':
-					$query[] = '(' . $meta_value['key'] . '_str:[' . $meta_value['value'] . ' TO *])';
+					$query[] = '(' . $meta_value['key'] . '_' . $type . ':[' . $this->set_query_value( $meta_value['value'], $type ) . ' TO *])';
+					break;
+				case '!=':
+
+					$multi_query = array();
+					$wildcard    = '(' . $meta_value['key'] . '_' . $type . ':*)';
+
+					if ( ! in_array( $wildcard, $wildcards_used ) ) {
+						$multi_query[]    = $wildcard;
+						$wildcards_used[] = $wildcard;
+					}
+					$multi_query[] = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
+
+					$query[] = implode( 'AND', $multi_query );
+					break;
+				case 'NOT EXISTS':
+					$meta_value['value'] = ( isset( $meta_value['value'] ) ) ? $meta_value['value'] : '*';
+					$multi_query         = array();
+					$multi_query[]       = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
+					$wildcard            = '!(' . $meta_value['key'] . '_' . $type . ':*)';
+
+					if ( ! in_array( $wildcard, $multi_query ) ) {
+						$multi_query[]    = $wildcard;
+						$wildcards_used[] = $wildcard;
+					}
+
+					$query[] = '(ID:*)';
+
+					$fq = implode( 'AND', $multi_query );
+					if ( ! in_array( $fq, $this->fq ) ) {
+						$this->fq[] = $fq;
+					}
+					break;
+				case '<';
+					$query[]    = '(' . $meta_value['key'] . '_' . $type . ':[* TO ' . $this->set_query_value( $meta_value['value'], $type ) . '])';
+					$this->fq[] = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
 					break;
 
+				case '>':
+					$query[]    = '(' . $meta_value['key'] . '_' . $type . ':[' . $this->set_query_value( $meta_value['value'], $type ) . ' TO *])';
+					$this->fq[] = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
+					break;
+				case 'LIKE':
+					$type    = 'str'; // Cannot do a LIKE search with a number.
+					$query[] = '(' . $meta_value['key'] . '_' . $type . ':*' . $meta_value['value'] . '*)';
+					break;
+				case 'NOT LIKE':
+					$type        = 'str'; // Cannot do a LIKE search with a number.
+					$multi_query = array();
+					$wildcard    = '(' . $meta_value['key'] . '_' . $type . ':*)';
+
+					if ( ! in_array( $wildcard, $wildcards_used ) ) {
+						$multi_query[]    = $wildcard;
+						$wildcards_used[] = $wildcard;
+					}
+					$multi_query[] = '!(' . $meta_value['key'] . '_' . $type . ':*' . $meta_value['value'] . '*)';
+
+					$query[] = implode( 'AND', $multi_query );
+					break;
+				case 'BETWEEN':
+					$query[] = '(' . $meta_value['key'] . '_' . $type . ':[' . $this->set_query_value( $meta_value['value'][0], $type ) . ' TO ' . $this->set_query_value( $meta_value['value'][1], $type ) . '])';
+					break;
+				case 'NOT BETWEEN':
+					$multi_query   = array();
+					$multi_query[] = '(' . $meta_value['key'] . '_' . $type . ':[* TO ' . $this->set_query_value( $meta_value['value'][0], $type ) . '])';
+					$multi_query[] = '(' . $meta_value['key'] . '_' . $type . ':[' . $this->set_query_value( $meta_value['value'][1], $type ) . ' TO *])';
+					$query[]       = implode( 'OR', $multi_query );
+					$this->fq[]    = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'][0], $type ) . ')';
+					$this->fq[]    = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'][1], $type ) . ')';
+					break;
+
+				case 'IN':
+					if ( is_array( $meta_value['value'] ) ) {
+						$multi_query = array();
+						foreach ( $meta_value['value'] as $value ) {
+							$multi_query[] = '(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $value, $type ) . ')';
+						}
+						$query[] = '(' . implode( 'OR', $multi_query ) . ')';
+					} else {
+						$query[] = '(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
+					}
+					break;
+
+				case 'NOT IN':
+					if ( is_array( $meta_value['value'] ) ) {
+						$multi_query = array();
+						foreach ( $meta_value['value'] as $value ) {
+							$multi_query[] = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $value, $type ) . ')';
+							$wildcard      = '(' . $meta_value['key'] . '_' . $type . ':*)';
+
+
+							if ( ! in_array( $wildcard, $wildcards_used ) ) {
+								$wildcards_used[] = $wildcard;
+								$query[]          = $wildcard;
+							}
+						}
+						$this->fq[] = '(' . implode( 'OR', $multi_query ) . ')';
+					} else {
+						$this->fq[] = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
+					}
+					break;
 				default:
-					$query[] = '(' . $meta_value['key'] . '_str:"' . $meta_value['value'] . '")';
+					$meta_value['value'] = ( isset( $meta_value['value'] ) ) ? $meta_value['value'] : '*';
+					if ( ! isset( $meta_value['key'] ) ) {
+						$multi_query = array();
+						foreach ( $indexed_keys as $the_key ) {
+							$multi_query[] = '(' . $the_key . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
+						}
+						$query[] = implode( 'OR', $multi_query );
+					} else {
+						$query[] = '(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
+					}
 					break;
 			}
 		}
 
 		return '(' . implode( $relation, $query ) . ')';
+
+	}
+
+	private function meta_type( $meta_value, $orderby = false ) {
+		if ( ! isset( $meta_value['type'] ) ) {
+			if ( isset( $meta_value['value'] ) && is_numeric( $meta_value['value'] ) ) {
+				return 'i';
+			}
+
+			return ( $orderby ) ? 's' : 'str';
+		}
+		switch ( true ) {
+			case stristr( $meta_value['type'], 'DECIMAL' ):
+				return 'd';
+				break;
+			case stristr( $meta_value['type'], 'NUMERIC' ):
+				return 'i';
+				break;
+			case stristr( $meta_value['type'], 'SIGNED' ):
+				return 'i';
+				break;
+
+			default:
+				return ( $orderby ) ? 's' : 'str';
+				break;
+
+		}
+	}
+
+	private function set_query_value( $value, $type = null ) {
+
+		if ( '*' === $value ) {
+			return $value;
+		}
+
+		switch ( $type ) {
+			case 'd':
+				return floatval( $value );
+				break;
+			case 'i':
+				return absint( $value );
+				break;
+			default:
+				return '"' . $value . '"';
+				break;
+		}
+
 
 	}
 
