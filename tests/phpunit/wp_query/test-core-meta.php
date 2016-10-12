@@ -105,6 +105,48 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$this->assertEqualSets( $expected, $returned );
 	}
 
+	public function test_meta_post_type() {
+
+		$p1 = self::factory()->post->create( array( 'post_type' => 'page' ) );
+		$p2 = self::factory()->post->create( array( 'post_type' => 'page' ) );
+		$p3 = self::factory()->post->create( array( 'post_type' => 'page' ) );
+		$this->__create_multiple( 7 );
+		add_post_meta( $p1, 'foo', 'bar' );
+		add_post_meta( $p2, 'oof', 'bar' );
+		add_post_meta( $p3, 'oof', 'baz' );
+		add_post_meta( $p1, 'oof', 'baz' );
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$query = new WP_Query( array(
+			'solr_integrate'         => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'posts_type'             => 'page',
+			'post_status'            => 'publish',
+			'meta_query'             => array(
+				'relation' => 'AND',
+				array(
+					'key'     => 'foo',
+					'value'   => 'bar',
+					'compare' => '='
+
+				),
+				array(
+					'key'     => 'oof',
+					'value'   => 'baz',
+					'compare' => '='
+				)
+			),
+		) );
+
+		$expected = array( $p1 );
+		$returned = array();
+		foreach ( $query->posts as $post ) {
+			$returned[] = $post->ID;
+		}
+
+		$this->assertEqualSets( $expected, $returned );
+	}
+
 	public function test_meta_query_no_key() {
 		$p1 = self::factory()->post->create();
 		$p2 = self::factory()->post->create();
@@ -567,6 +609,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'baz', rand_str() );
 		add_post_meta( $post_id7, 'bar', 'val2' );
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		sleep(1);
 		$query = new WP_Query( array(
 			'meta_query'             => array(
 				array(

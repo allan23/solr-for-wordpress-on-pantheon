@@ -184,6 +184,7 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Converts Solr results to WP_Posts.
+	 *
 	 * @param array $search Solr results array.
 	 *
 	 * @return array
@@ -224,6 +225,7 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Converts the orderby to a Solr-friendly sortby.
+	 *
 	 * @param string|array $orderby
 	 * @param WP_Query $query
 	 *
@@ -389,6 +391,7 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Parses WP_Query variables to a Solr query.
+	 *
 	 * @param WP_Query $query
 	 *
 	 * @return string
@@ -441,6 +444,7 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Parses tax queries to Solr.
+	 *
 	 * @param array $tax_query
 	 *
 	 * @return string
@@ -482,19 +486,25 @@ class SolrPower_WP_Query {
 
 				continue;
 			}
-			$terms = array();
-			foreach ( $tax_value['terms'] as $term ) {
-				$terms[] = '"' . $term . '"';
+
+			if ( is_array( $tax_value['terms'] ) ) {
+				$terms = array();
+				foreach ( $tax_value['terms'] as $term ) {
+					$terms[] = '"' . $term . '"';
+				}
+			} else {
+				$terms = array( $tax_value['terms'] );
 			}
 			switch ( $tax_value['field'] ) {
 				case 'slug':
-					$query[] = $tax_value['taxonomy'] . '_taxonomy_slug:(' . implode( 'OR', $terms ) . ')';
+					$query[] = '(' . $tax_value['taxonomy'] . '_taxonomy_slug:' . implode( 'OR', $terms ) . ')';
 					break;
+				case 'term_id':
 				case 'id':
-					$query[] = $tax_value['taxonomy'] . '_taxonomy_id:(' . implode( 'OR', $terms ) . ')';
+					$query[] = '(' .$tax_value['taxonomy'] . '_taxonomy_id:' . implode( 'OR', $terms ) . ')';
 					break;
 				default:
-					$query[] = $tax_value['taxonomy'] . '_taxonomy:(' . implode( 'OR', $terms ) . ')';
+					$query[] = '(' .$tax_value['taxonomy'] . '_taxonomy:' . implode( 'OR', $terms ) . ')';
 					break;
 			}
 
@@ -505,6 +515,7 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Parses meta queries to Solr.
+	 *
 	 * @param array $meta_query
 	 *
 	 * @return string
@@ -659,6 +670,7 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Determines the dynamic field type based on the meta_type specified.
+	 *
 	 * @param array $meta_value
 	 * @param bool $orderby
 	 *
@@ -669,6 +681,7 @@ class SolrPower_WP_Query {
 			if ( isset( $meta_value['value'] ) && is_numeric( $meta_value['value'] ) ) {
 				return 'i';
 			}
+
 			// if $orderby is true, set the dynamic field type as *_s since it is not multivalued in schema.
 			return ( $orderby ) ? 's' : 'str';
 		}
@@ -692,6 +705,7 @@ class SolrPower_WP_Query {
 
 	/**
 	 * Sets query value formatting based on type.
+	 *
 	 * @param string $value
 	 * @param null|string $type
 	 *
