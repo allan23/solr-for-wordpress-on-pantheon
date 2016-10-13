@@ -96,6 +96,7 @@ class SolrPower_WP_Query {
 	 * Reset the variables in the object to avoid issues with future queries.
 	 */
 	function reset_vars() {
+		return;
 		$this->fq  = array();
 		$this->qry = '';
 	}
@@ -466,26 +467,14 @@ class SolrPower_WP_Query {
 				$terms = array();
 				foreach ( $tax_value['terms'] as $term ) {
 					if ( isset( $tax_value['field'] )
-					     && ( 'slug' === $tax_value['field'] || 'id' === $tax_value['field'] )
+					     && ( 'slug' === $tax_value['field'] || strstr( $tax_value['field'], '_id' ) )
 					) {
-						$terms[] = '"' . $term . '"';
+						$terms[] = $term;
 					} else {
-						$terms[] = '"' . $term . '^^"';
+						$terms[] = $term . '^^';
 					}
 				}
-				switch ( $tax_value['field'] ) {
-					case 'slug':
-						$query[] = 'categories_slug:(' . implode( 'OR', $terms ) . ')';
-						break;
-					case 'id':
-						$query[] = 'categories_id:(' . implode( 'OR', $terms ) . ')';
-						break;
-					default:
-						$query[] = 'categories:(' . implode( 'OR', $terms ) . ')';
-						break;
-				}
-
-				continue;
+				$tax_value['terms'] = $terms;
 			}
 
 			if ( is_array( $tax_value['terms'] ) ) {
@@ -496,22 +485,73 @@ class SolrPower_WP_Query {
 			} else {
 				$terms = array( $tax_value['terms'] );
 			}
-			switch ( $tax_value['field'] ) {
-				case 'slug':
-					$query[] = '(' . $tax_value['taxonomy'] . '_taxonomy_slug:' . implode( 'OR', $terms ) . ')';
+			$tax_value['field'] = ( isset( $tax_value['field'] ) ) ? $tax_value['field'] : 'term_id';
+
+			$field = $this->tax_field_name( $tax_value['field'], $tax_value['taxonomy'] );
+
+			$tax_value['operator'] = ( isset( $tax_value['operator'] ) ) ? $tax_value['operator'] : 'IN';
+
+			switch ( $tax_value['operator'] ) {
+
+				case 'NOT IN':
+					if ( is_array( $meta_value['value'] ) ) {
+						$multi_query = array();
+						foreach ( $meta_value['value'] as $value ) {
+							$multi_query[] = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $value, $type ) . ')';
+							$wildcard      = '(' . $meta_value['key'] . '_' . $type . ':*)';
+
+
+							if ( ! in_array( $wildcard, $wildcards_used ) ) {
+								$wildcards_used[] = $wildcard;
+								$query[]          = $wildcard;
+							}
+						}
+						$this->fq[] = '(' . implode( 'OR', $multi_query ) . ')';
+					} else {
+						$this->fq[] = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
+					}
 					break;
-				case 'term_id':
-				case 'id':
-					$query[] = '(' .$tax_value['taxonomy'] . '_taxonomy_id:' . implode( 'OR', $terms ) . ')';
+
+				case 'AND':
+
 					break;
-				default:
-					$query[] = '(' .$tax_value['taxonomy'] . '_taxonomy:' . implode( 'OR', $terms ) . ')';
+
+				case 'EXISTS':
+
+					break;
+
+				case 'NOT EXISTS':
+
+					break;
+
+				default: // 'IN'
+					$query[] = '(' . $field . ':' . implode( 'OR', $terms ) . ')';
 					break;
 			}
-
 		}
 
 		return implode( $relation, $query );
+	}
+
+	private function tax_field_name( $tax_field, $taxonomy ) {
+		if ( 'category' !== $taxonomy ) {
+			$taxonomy .= '_taxonomy';
+		} else {
+			$taxonomy = 'categories';
+		}
+		switch ( $tax_field ) {
+			case 'slug':
+				$field = $taxonomy . '_slug';
+				break;
+			case 'name':
+				$field = $taxonomy;
+				break;
+			default:
+				$field = $taxonomy . '_id';
+				break;
+		}
+
+		return $field;
 	}
 
 	/**
