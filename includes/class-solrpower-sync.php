@@ -262,6 +262,7 @@ class SolrPower_Sync {
 					} else {
 						$doc->addField( 'categories', $category->cat_name );
 					}
+					$doc->addField( 'categories_str', $category->cat_name );
 					$doc->addField( 'categories_slug', $category->slug );
 					$doc->addField( 'categories_id', $category->term_id );
 				}
@@ -287,6 +288,8 @@ class SolrPower_Sync {
 			if ( ! $tags == null ) {
 				foreach ( $tags as $tag ) {
 					$doc->addField( 'tags', $tag->name );
+					$doc->addField( 'tags_slug', $tag->slug );
+					$doc->addField( 'tags_id', $tag->id);
 				}
 			}
 
