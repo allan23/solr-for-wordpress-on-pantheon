@@ -96,10 +96,8 @@ class SolrPower_WP_Query {
 	 * Reset the variables in the object to avoid issues with future queries.
 	 */
 	function reset_vars() {
-		//return;
-		$this->backup = array( $this->qry, $this->fq );
-		$this->fq     = array();
-		$this->qry    = '';
+		$this->fq  = array();
+		$this->qry = '';
 	}
 
 	/**
@@ -419,15 +417,12 @@ class SolrPower_WP_Query {
 		}
 
 		$solr_query = array();
-		if ( $query->is_date() ) {
-			$solr_query[] = $this->parse_date_query( $query->query_vars );
-		}
 
 		if ( ! empty( $query->meta_query->queries ) ) {
 			$solr_query[] = $this->parse_meta_query( $query->meta_query->queries );
 		}
 
-		if ( !empty($query->tax_query->queries) ) {
+		if ( ! empty( $query->tax_query->queries ) ) {
 			$solr_query[] = $this->parse_tax_query( $query->tax_query->queries );
 		}
 		foreach ( $query->query_vars as $var_key => $var_value ) {
@@ -452,7 +447,6 @@ class SolrPower_WP_Query {
 	 * @param array $tax_query
 	 *
 	 * @return string
-	 * @todo Advanced tax_queries (comparisons, etc.).
 	 */
 	private function parse_tax_query( $tax_query ) {
 		$query          = array();
@@ -476,27 +470,18 @@ class SolrPower_WP_Query {
 				continue;
 			}
 			if ( ! isset( $tax_value['taxonomy'] ) ) {
-				//$query[] = ''; // Kill the query.
+				// Kill the query.
 				continue;
 			}
-			if ( 'category' === $tax_value['taxonomy'] ) {
-				$terms = array();
-				foreach ( $tax_value['terms'] as $term ) {
-					if ( isset( $tax_value['field'] )
-					     && ( 'slug' === $tax_value['field'] || strstr( $tax_value['field'], 'id' ) )
-					) {
-						$terms[] = $term;
-					} else {
-						$terms[] = $term . '^^';
-					}
-				}
-				$tax_value['terms'] = $terms;
-			}
 
+			$used_terms = array();
 			if ( is_array( $tax_value['terms'] ) ) {
 				$terms = array();
 				foreach ( $tax_value['terms'] as $term ) {
-					$terms[] = '"' . $term . '"';
+					if ( ! in_array( $term, $used_terms ) ) {
+						$terms[]      = '"' . $term . '"';
+						$used_terms[] = $term;
+					}
 				}
 			} else {
 				$terms = array( $tax_value['terms'] );
@@ -506,6 +491,8 @@ class SolrPower_WP_Query {
 			$field = $this->tax_field_name( $tax_value['field'], $tax_value['taxonomy'] );
 
 			$tax_value['operator'] = ( isset( $tax_value['operator'] ) ) ? $tax_value['operator'] : 'IN';
+
+			$tax_value['include_children'] = ( isset( $tax_value['include_children'] ) ) ? $tax_value['include_children'] : true;
 
 			switch ( $tax_value['operator'] ) {
 
@@ -532,7 +519,7 @@ class SolrPower_WP_Query {
 						$wildcards_used[] = $wildcard;
 						$query[]          = $wildcard;
 					}
-					$tax_fq[] = '(' . $field . ':' . implode( 'AND', $terms ) . ')';
+					$tax_fq[] = '(' . $field . ':(' . implode( 'AND', $terms ) . '))';
 					break;
 
 				case 'EXISTS':
@@ -574,7 +561,12 @@ class SolrPower_WP_Query {
 					break;
 
 				default: // 'IN'
-					$query[] = '(' . $field . ':' . implode( 'OR', $terms ) . ')';
+					$multi_query   = array();
+					$multi_query[] = '(' . $field . ':(' . implode( 'OR', $terms ) . '))';
+					if ( $tax_value['include_children'] && is_taxonomy_hierarchical( $tax_value['taxonomy'] ) ) {
+						$multi_query[] = '(parent_' . $field . ':' . implode( 'OR', $terms ) . ')';
+					}
+					$query[] = '(' . implode( 'OR', $multi_query ) . ')';
 					break;
 			}
 		}
@@ -596,10 +588,13 @@ class SolrPower_WP_Query {
 		}
 		switch ( $tax_field ) {
 			case 'slug':
-				$field = $taxonomy . '_slug';
+				$field = $taxonomy . '_slug_str';
 				break;
 			case 'name':
-				$field = $taxonomy;
+				$field = $taxonomy . '_str';
+				break;
+			case 'term_taxonomy_id':
+				$field = 'term_taxonomy_id';
 				break;
 			default:
 				$field = $taxonomy . '_id';
