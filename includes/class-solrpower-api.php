@@ -27,6 +27,11 @@ class SolrPower_Api {
 	public $last_error;
 
 	/**
+	 * @var bool Is this a wildcard query?
+	 */
+	public $wildcards = false;
+
+	/**
 	 * Grab instance of object.
 	 * @return SolrPower_Api
 	 */
@@ -327,7 +332,7 @@ class SolrPower_Api {
 				$facet_fields[] = $field_name . '_str';
 			}
 		}
-
+		$count = ( - 1 === $count ) ? 50000 : $count;
 		if ( $solr ) {
 			$select = array(
 				'query'      => $qry,
@@ -375,6 +380,8 @@ class SolrPower_Api {
 				$dismax->setQueryAlternative( $query->getQuery() );
 				$query->setQuery( '' );
 			}
+
+
 			/**
 			 * Filter the Solarium query object.
 			 *

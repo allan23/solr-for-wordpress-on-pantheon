@@ -11,10 +11,6 @@ class SolrTaxQueryTest extends SolrTestBase {
 		parent::tearDown();
 	}
 
-	function show_query() {
-		print_r( SolrPower_WP_Query::get_instance()->backup );
-		print_r( SolrPower_Api::get_instance()->log );
-	}
 
 	function test_wp_query_by_tax() {
 		$this->__create_test_post();

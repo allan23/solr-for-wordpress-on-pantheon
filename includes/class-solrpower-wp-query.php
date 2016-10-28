@@ -418,6 +418,10 @@ class SolrPower_WP_Query {
 
 		$solr_query = array();
 
+		if ( false !== $query->date_query ) {
+			$solr_query[] = $this->parse_date_query( $query->date_query->queries );
+		}
+
 		if ( ! empty( $query->meta_query->queries ) ) {
 			$solr_query[] = $this->parse_meta_query( $query->meta_query->queries );
 		}
@@ -426,7 +430,10 @@ class SolrPower_WP_Query {
 			$solr_query[] = $this->parse_tax_query( $query->tax_query->queries );
 		}
 		foreach ( $query->query_vars as $var_key => $var_value ) {
-
+			if ( 'post_status' === $var_key && 'any' === $var_value ) {
+				//$solr_query[]='(post_status:publish)';
+				continue;
+			}
 
 			if ( 'post_type' === $var_key && 'any' === $var_value ) {
 				continue;
@@ -822,6 +829,73 @@ class SolrPower_WP_Query {
 
 
 	}
+
+	/**
+	 * @param $date_query
+	 *
+	 * @return string
+	 *
+	 * @todo refactor this and make it cleaner!
+	 */
+	function parse_date_query( $date_query ) {
+
+		$query    = array();
+		$relation = ( isset( $date_query['relation'] ) ) ? $date_query['relation'] : 'OR';
+		$compare  = ( isset( $date_query['compare'] ) ) ? $date_query['compare'] : '=';
+		foreach ( $date_query as $dq ):
+
+			if ( isset( $dq['before'] ) && is_array( $dq['before'] ) ) {
+				$default_fields = array(
+					'year'  => date( 'Y' ),
+					'month' => '01',
+					'day'   => '31',
+				);
+				$fields         = array_merge( $default_fields, $dq['before'] );
+				$column         = ( isset( $dq['column'] ) ) ? $dq['column'] : 'post_date';
+				$the_date       = date( 'Y-m-d', strtotime( $fields['year'] . '-' . $fields['month'] . '-' . $fields['day'] ) );
+				$query[]        = '(' . $column . ':' . '[* TO ' . $the_date . 'T00:00:00Z])';
+
+			} elseif ( isset( $dq['before'] ) ) {
+				$the_date = date( 'Y-m-d h:m:s', strtotime( $dq['before'] ) );
+				$the_date = SolrPower_Sync::get_instance()->format_date( $the_date );
+				$column   = ( isset( $dq['column'] ) ) ? $dq['column'] : 'post_date';
+
+				$query[] = '(' . $column . ':' . '[* TO ' . $the_date . '])';
+
+			}
+
+			if ( isset( $dq['after'] ) && is_array( $dq['after'] ) ) {
+				$default_fields = array(
+					'year'  => date( 'Y' ),
+					'month' => null,
+					'day'   => '01',
+				);
+				$fields         = array_merge( $default_fields, $dq['after'] );
+				if ( is_null( $fields['month'] ) ) {
+					$year    = ( isset( $dq['inclusive'] ) ) ? $fields['year'] : $fields['year'] + 1;
+					$query[] = '(year_i:[' . $year . ' TO * ])';
+					continue;
+				}
+				$column   = ( isset( $dq['column'] ) ) ? $dq['column'] : 'post_date';
+				$the_date = date( 'Y-m-d', strtotime( $fields['year'] . '-' . $fields['month'] . '-' . $fields['day'] ) );
+				$query[]  = '(' . $column . ':' . '[' . $the_date . 'T00:00:00Z TO *])';
+
+			} elseif ( isset( $dq['after'] ) ) {
+				$the_date = strtotime( $dq['after'] );
+				$the_date = ( isset( $dq['inclusive'] ) ) ? $the_date : strtotime( '+1 second', $the_date );
+				$the_date = date( 'Y-m-d h:i:s', $the_date );
+				$the_date = SolrPower_Sync::get_instance()->format_date( $the_date );
+				$column   = ( isset( $dq['column'] ) ) ? $dq['column'] : 'post_date';
+
+				$query[] = '(' . $column . ':' . '[' . $the_date . ' TO *])';
+
+			}
+
+		endforeach;
+
+		return '(' . implode( $relation, $query ) . ')';
+	}
+
 }
 
 
