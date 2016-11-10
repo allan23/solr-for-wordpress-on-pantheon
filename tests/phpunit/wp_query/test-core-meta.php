@@ -553,6 +553,8 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id5, 'tango', 'val2' );
 		$post_id6 = self::factory()->post->create();
 		add_post_meta( $post_id6, 'bar', 'val1' );
+		wp_cache_flush();
+		sleep( 3 );
 
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$query = new WP_Query( array(
@@ -611,16 +613,8 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'bar', 'val2' );
 		wp_cache_flush();
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
-		sleep(3);
-		$search = $this->__run_test_query( '*:*' );
+		sleep( 3 );
 
-
-		if ( is_null( $search ) ) {
-			$this->assertTrue( false );
-		}
-		$search = $search->getData();
-		$search = $search['response'];
-print_r($search);
 
 		$query = new WP_Query( array(
 			'meta_query'             => array(
@@ -651,7 +645,7 @@ print_r($search);
 			$returned[] = $post->ID;
 		}
 		print_r( SolrPower_Api::get_instance()->log );
-		print_r(SolrPower_WP_Query::get_instance()->backup);
+		print_r( SolrPower_WP_Query::get_instance()->backup );
 		$this->assertEqualSets( $expected, $returned );
 
 		$query = new WP_Query( array(
