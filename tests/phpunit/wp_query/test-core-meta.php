@@ -640,7 +640,8 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		foreach ( $query->posts as $post ) {
 			$returned[] = $post->ID;
 		}
-
+		print_r( SolrPower_Api::get_instance()->log );
+		print_r(SolrPower_WP_Query::get_instance()->backup);
 		$this->assertEqualSets( $expected, $returned );
 
 		$query = new WP_Query( array(

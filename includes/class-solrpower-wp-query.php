@@ -96,6 +96,7 @@ class SolrPower_WP_Query {
 	 * Reset the variables in the object to avoid issues with future queries.
 	 */
 	function reset_vars() {
+		$this->backup=$this->qry;
 		$this->fq  = array();
 		$this->qry = '';
 	}
