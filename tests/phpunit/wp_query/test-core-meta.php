@@ -611,6 +611,15 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'bar', 'val2' );
 		wp_cache_flush();
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$search = $this->__run_test_query( '*:*' );
+
+
+		if ( is_null( $search ) ) {
+			$this->assertTrue( false );
+		}
+		$search = $search->getData();
+		$search = $search['response'];
+print_r($search);
 
 		$query = new WP_Query( array(
 			'meta_query'             => array(
