@@ -5,11 +5,6 @@ notifications:
     on_success: never
     on_failure: change
 
-branches:
-  only:
-    - master
-    - /^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+.*$/
-
 cache:
   directories:
     - node_modules
