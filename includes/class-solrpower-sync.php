@@ -360,7 +360,7 @@ class SolrPower_Sync {
 
 				if ( $commit ) {
 					syslog( LOG_INFO, "telling Solr to commit" );
-					$update->addCommit( null, true );
+					$update->addCommit();
 					$solr->update( $update );
 				}
 

@@ -35,6 +35,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 	function tearDown() {
 		parent::tearDown();
 		SolrPower_Sync::get_instance()->bulk_sync = false;
+		sleep(2);
 	}
 
 	public function test_meta_empty() {
