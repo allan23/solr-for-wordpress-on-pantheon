@@ -4,11 +4,12 @@ class SolrTaxQueryTest extends SolrTestBase {
 	function setUp() {
 
 		parent::setUp();
-
+		SolrPower_Sync::get_instance()->bulk_sync = true;
 	}
 
 	function tearDown() {
 		parent::tearDown();
+		SolrPower_Sync::get_instance()->bulk_sync = false;
 	}
 
 	function show_query() {
