@@ -1,5 +1,6 @@
 <?php
-class SolrTestBase extends WP_UnitTestCase{
+
+class SolrTestBase extends WP_UnitTestCase {
 
 	/**
 	 * @var integer Term ID of custom taxonomy term.
@@ -36,8 +37,8 @@ class SolrTestBase extends WP_UnitTestCase{
 	function tearDown() {
 		parent::tearDown();
 		global $wpdb;
-		$wpdb->query('TRUNCATE ' . $wpdb->posts);
-		$wpdb->query('TRUNCATE ' . $wpdb->postmeta);
+		$wpdb->query( 'TRUNCATE ' . $wpdb->posts );
+		$wpdb->query( 'TRUNCATE ' . $wpdb->postmeta );
 		// Delete the entire index.
 		SolrPower_Sync::get_instance()->delete_all();
 		wp_cache_flush();
@@ -146,5 +147,14 @@ class SolrTestBase extends WP_UnitTestCase{
 		update_post_meta( $p_id, 'my_field', 'my_value' );
 		update_post_meta( $p_id, 'other_field', 'other_value' );
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+	}
+
+	/**
+	 * Perform a content sync to Solr.
+	 */
+	function sync() {
+		wp_cache_flush();
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		sleep( 1 );
 	}
 }

@@ -46,7 +46,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p1, 'foo', 'bar' );
 		add_post_meta( $p2, 'oof', 'bar' );
 		add_post_meta( $p3, 'oof', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query    = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -74,7 +74,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p2, 'oof', 'bar' );
 		add_post_meta( $p3, 'oof', 'baz' );
 		add_post_meta( $p1, 'oof', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -116,7 +116,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p2, 'oof', 'bar' );
 		add_post_meta( $p3, 'oof', 'baz' );
 		add_post_meta( $p1, 'oof', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -156,7 +156,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p1, 'foo', 'bar' );
 		add_post_meta( $p2, 'oof', 'bar' );
 		add_post_meta( $p3, 'oof', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query    = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -185,7 +185,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p1, 'foo', 'bar' );
 		add_post_meta( $p2, 'oof', 'bar' );
 		add_post_meta( $p3, 'oof', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -212,7 +212,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$p2 = self::factory()->post->create();
 
 		add_post_meta( $p1, 'foo', 'bar' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -239,7 +239,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$p2 = self::factory()->post->create();
 
 		add_post_meta( $p1, 'foo', 'bar' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -269,7 +269,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 
 		add_post_meta( $p1, 'foo', 'bar' );
 		add_post_meta( $p2, 'foo', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query    = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -299,7 +299,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p1, 'foo', '1' );
 		add_post_meta( $p2, 'foo', '2' );
 		add_post_meta( $p3, 'foo', '3' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		// <
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
@@ -394,7 +394,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$p2 = self::factory()->post->create();
 
 		add_post_meta( $p1, 'foo', 'bar' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query    = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -423,7 +423,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 
 		add_post_meta( $p1, 'foo', 'bar' );
 		add_post_meta( $p2, 'foo', 'rab' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -454,7 +454,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p1, 'foo', '1' );
 		add_post_meta( $p2, 'foo', '10' );
 		add_post_meta( $p3, 'foo', '100' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -512,7 +512,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p1, 'bar', 'bar value 1' );
 		add_post_meta( $p2, 'foo', 'foo value 1' );
 		add_post_meta( $p2, 'bar', 'bar value 2' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -553,10 +553,9 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id5, 'tango', 'val2' );
 		$post_id6 = self::factory()->post->create();
 		add_post_meta( $post_id6, 'bar', 'val1' );
-		wp_cache_flush();
-		sleep( 3 );
 
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -611,10 +610,8 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'froo', rand_str() );
 		add_post_meta( $post_id7, 'baz', rand_str() );
 		add_post_meta( $post_id7, 'bar', 'val2' );
-		wp_cache_flush();
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
-		sleep( 3 );
 
+		$this->sync();
 
 		$query = new WP_Query( array(
 			'meta_query'             => array(
@@ -644,8 +641,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		foreach ( $query->posts as $post ) {
 			$returned[] = $post->ID;
 		}
-		print_r( SolrPower_Api::get_instance()->log );
-		print_r( SolrPower_WP_Query::get_instance()->backup );
+
 		$this->assertEqualSets( $expected, $returned );
 
 		$query = new WP_Query( array(
@@ -677,7 +673,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$posts = self::factory()->post->create_many( 3 );
 		add_post_meta( $posts[0], 'foo', 'bar' );
 		add_post_meta( $posts[2], 'foo', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query    = new WP_Query( array(
 			'solr_integrate' => true,
 			'fields'         => 'ids',
@@ -701,7 +697,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$posts = self::factory()->post->create_many( 3 );
 		add_post_meta( $posts[0], 'foo', 'bar' );
 		add_post_meta( $posts[2], 'foo', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query    = new WP_Query( array(
 			'solr_integrate' => true,
 			'fields'         => 'ids',
@@ -726,7 +722,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$posts = self::factory()->post->create_many( 3 );
 		add_post_meta( $posts[0], 'foo', 'bar' );
 		add_post_meta( $posts[2], 'foo', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate' => true,
 			'fields'         => 'ids',
@@ -760,7 +756,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id4, 'baz', rand_str() );
 		$post_id5 = self::factory()->post->create();
 		add_post_meta( $post_id5, 'foo', rand_str() );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -837,7 +833,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[1], 'color', 'blue' );
 		add_post_meta( $posts[1], 'vegetable', 'onion' );
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -875,7 +871,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[1], 'color', 'blue' );
 		add_post_meta( $posts[1], 'vegetable', 'onion' );
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -911,7 +907,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[1], 'color', 'blue' );
 		add_post_meta( $posts[1], 'vegetable', 'onion' );
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -947,7 +943,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[1], 'number_of_colors', '5' );
 		add_post_meta( $posts[1], 'vegetable', 'onion' );
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -986,7 +982,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
 		add_post_meta( $posts[3], 'vegetable', 'banana' );
 		add_post_meta( $posts[3], 'vegetable', 'onion' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -1024,7 +1020,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[1], 'vegetable', 'shallot' );
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
 		add_post_meta( $posts[3], 'vegetable', 'banana' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -1061,7 +1057,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[1], 'vegetable', 'onion' );
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
 		add_post_meta( $posts[3], 'vegetable', 'banana' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -1105,7 +1101,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		// Neither.
 		add_post_meta( $posts[2], 'color', 'blue' );
 		add_post_meta( $posts[2], 'vegetable', 'onion' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -1142,7 +1138,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[1], 'vegetable', 'onion' );
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
 		add_post_meta( $posts[3], 'vegetable', 'banana' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -1179,7 +1175,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[1], 'vegetable', 'onion' );
 		add_post_meta( $posts[2], 'vegetable', 'shallot' );
 		add_post_meta( $posts[3], 'vegetable', 'banana' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -1220,7 +1216,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		update_post_meta( $post_2, 'decimal_value', '0.23409844' );
 		update_post_meta( $post_3, 'decimal_value', '0.3' );
 		update_post_meta( $post_4, 'decimal_value', '0.4' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query    = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
@@ -1450,7 +1446,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p1, 'foo', '5' );
 		add_post_meta( $p2, 'foo', '7' );
 		add_post_meta( $p3, 'foo', '10' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate' => true,
 			'meta_key'       => 'foo',
@@ -1478,7 +1474,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		update_post_meta( $posts[0], 'bar1', 'baz' );
 		update_post_meta( $posts[1], 'bar1', 'baz' );
 		update_post_meta( $posts[2], 'bar2', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'orderby'                => 'meta_value',
@@ -1525,7 +1521,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		update_post_meta( $posts[0], 'bar2', 'baz' );
 		update_post_meta( $posts[1], 'bar2', 'baz' );
 		update_post_meta( $posts[2], 'bar2', 'baz' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query    = new WP_Query( array(
 			'solr_integrate'         => true,
 			'orderby'                => 'meta_value',
@@ -1566,7 +1562,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p2, 'foo2', 'bar' );
 		add_post_meta( $p3, 'foo2', 'bar' );
 		add_post_meta( $p3, 'foo3', 'bar' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -1610,7 +1606,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p3, 'foo2', 'bar' );
 		add_post_meta( $p3, 'foo3', 'bar' );
 		add_post_meta( $p3, 'foo4', 'bar' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -1663,7 +1659,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id4, 'time', 1 );
 		$post_id5 = self::factory()->post->create();
 		add_post_meta( $post_id5, 'time', 1000 );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$args = array(
 			'solr_integrate' => true,
 			'meta_key'       => 'time',
@@ -1717,7 +1713,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id4, 'baz', 'bar' );
 		$post_id5 = self::factory()->post->create();
 		add_post_meta( $post_id5, 'foo', rand_str() );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$posts = get_posts( array(
 			'solr_integrate' => true,
 			'meta_key'       => 'foo',
@@ -1752,7 +1748,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id2, 'city', 'Lorem' );
 		$post_id3 = self::factory()->post->create();
 		add_post_meta( $post_id3, 'city', 'Loren' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$args = array(
 			'solr_integrate' => true,
 			'meta_query'     => array(
@@ -1788,7 +1784,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id5, 'bar', '0' );
 		$post_id6 = self::factory()->post->create();
 		add_post_meta( $post_id6, 'baz', 0 );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$q = new WP_Query( array( 'solr_integrate' => true, 'meta_key' => 'foo', 'meta_value' => '0' ) );
 		$this->assertEquals( 1, count( $q->posts ) );
 		foreach ( $q->posts as $post ) {
@@ -1839,7 +1835,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[0], 'foo', 'aaa' );
 		add_post_meta( $posts[1], 'foo', 'zzz' );
 		add_post_meta( $posts[2], 'foo', 'jjj' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$q = new WP_Query( array(
 			'solr_integrate' => true,
 			'fields'         => 'ids',
@@ -1870,7 +1866,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $p1, 'foo', 'jjj' );
 		add_post_meta( $p2, 'foo', 'zzz' );
 		add_post_meta( $p3, 'foo', 'aaa' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$q = new WP_Query( array(
 			'solr_integrate' => true,
 			'fields'         => 'ids',
@@ -1898,7 +1894,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $posts[0], 'bar', 'aaa' );
 		add_post_meta( $posts[1], 'bar', 'ccc' );
 		add_post_meta( $posts[2], 'bar', 'bbb' );
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$q = new WP_Query( array(
 			'solr_integrate' => true,
 			'fields'         => 'ids',
@@ -1932,7 +1928,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		foreach ( $post_3_meta as $meta_key => $meta_value ) {
 			delete_post_meta( $posts[3], $meta_key );
 		}
-		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		$this->sync();
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
