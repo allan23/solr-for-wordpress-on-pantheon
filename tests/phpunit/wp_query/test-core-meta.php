@@ -35,7 +35,6 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 	function tearDown() {
 		parent::tearDown();
 		SolrPower_Sync::get_instance()->bulk_sync = false;
-		sleep(2);
 	}
 
 	public function test_meta_empty() {
@@ -613,7 +612,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'bar', 'val2' );
 
 		$this->sync();
-
+		sleep( 3 );
 		$query = new WP_Query( array(
 			'meta_query'             => array(
 				array(
