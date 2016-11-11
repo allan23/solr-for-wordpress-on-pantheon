@@ -354,7 +354,7 @@ class SolrPower_Sync {
 
 				if ( $documents ) {
 					if ($this->debug){
-						print_r(count( $documents ) . ' are being indexed.' . PHP_EOL);
+						//print_r(count( $documents ) . ' are being indexed.' . PHP_EOL);
 					}
 					syslog( LOG_INFO, "posting " . count( $documents ) . " documents for blog:" . get_bloginfo( 'wpurl' ) );
 					$update->addDocuments( $documents );
@@ -365,7 +365,10 @@ class SolrPower_Sync {
 				if ( $commit ) {
 					syslog( LOG_INFO, "telling Solr to commit" );
 					$update->addCommit();
-					$solr->update( $update );
+					$run_update=$solr->update( $update );
+					if ($this->debug){
+						print_r($run_update . PHP_EOL);
+					}
 				}
 
 				if ( $optimize ) {
