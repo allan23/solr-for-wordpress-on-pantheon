@@ -546,7 +546,7 @@ class SolrPower_Sync {
 				'offset'                 => absint( $prev ),
 				'cache_results'          => false,
 				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false
+				'update_post_term_cache' => false,
 			);
 			$query     = new WP_Query( $args );
 			$posts     = $query->posts;
@@ -561,6 +561,13 @@ class SolrPower_Sync {
 			}
 			$last    = absint( $prev ) + 5;
 			$percent = absint( ( floatval( $last ) / floatval( $query->found_posts ) ) * 100 );
+			$solr        = get_solr();
+			foreach ($posts as $the_post){
+				$update      = $solr->createUpdate();
+				$documents[] = $this->build_document( $update->createDocument(), get_post( $the_post ) );
+				$cnt ++;
+			}
+			/**
 			for ( $idx = 0; $idx <= $postcount; $idx ++ ) {
 				$postid = $posts[ $idx ];
 
@@ -575,7 +582,7 @@ class SolrPower_Sync {
 					wp_cache_flush();
 					break;
 				}
-			}
+			}*/
 		}
 
 		if ( $documents ) {
