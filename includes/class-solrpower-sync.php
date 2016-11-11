@@ -21,6 +21,7 @@ class SolrPower_Sync {
 	var $bulk_sync = false;
 
 	var $debug = false;
+
 	/**
 	 * Grab instance of object.
 	 * @return SolrPower_Sync
@@ -327,8 +328,8 @@ class SolrPower_Sync {
 							$doc->addField( $field_name . '_str', $value );
 							if ( ! in_array( $field_name, $used ) ) {
 								$doc->addField( $field_name . '_i', absint( $value ) );
-								$doc->addField( $field_name . '_d', floatval( $value ) );
-								$doc->addField( $field_name . '_f', floatval( $value ) );
+								$doc->addField( $field_name . '_d', floatval( preg_replace( "/[^-0-9\.]/", "", $value ) ) );
+								$doc->addField( $field_name . '_f', floatval( preg_replace( "/[^-0-9\.]/", "", $value ) ) );
 								$doc->addField( $field_name . '_s', $value );
 							}
 							$doc->addField( $field_name . '_srch', $value );
@@ -353,7 +354,7 @@ class SolrPower_Sync {
 				$update = $solr->createUpdate();
 
 				if ( $documents ) {
-					if ($this->debug){
+					if ( $this->debug ) {
 						//print_r(count( $documents ) . ' are being indexed.' . PHP_EOL);
 					}
 					syslog( LOG_INFO, "posting " . count( $documents ) . " documents for blog:" . get_bloginfo( 'wpurl' ) );
@@ -365,9 +366,9 @@ class SolrPower_Sync {
 				if ( $commit ) {
 					syslog( LOG_INFO, "telling Solr to commit" );
 					$update->addCommit();
-					$run_update=$solr->update( $update );
-					if ($this->debug){
-						print_r($run_update . PHP_EOL);
+					$run_update = $solr->update( $update );
+					if ( $this->debug ) {
+						print_r( $run_update . PHP_EOL );
 					}
 				}
 
@@ -386,9 +387,10 @@ class SolrPower_Sync {
 			}
 		} catch ( Exception $e ) {
 			$this->error_msg = esc_html( $e->getMessage() );
-			if ($this->debug){
-				print_r($e->getMessage() . PHP_EOL);
+			if ( $this->debug ) {
+				print_r( $e->getMessage() . PHP_EOL );
 			}
+
 			return false;
 		}
 	}
