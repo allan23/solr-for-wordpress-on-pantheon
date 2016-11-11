@@ -36,6 +36,136 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		parent::tearDown();
 		SolrPower_Sync::get_instance()->bulk_sync = false;
 	}
+	public function test_meta_query_relation_or() {
+		$post_id = self::factory()->post->create();
+		add_post_meta( $post_id, 'foo', rand_str() );
+		add_post_meta( $post_id, 'foo', rand_str() );
+		$post_id2 = self::factory()->post->create();
+		add_post_meta( $post_id2, 'bar', 'val2' );
+		$post_id3 = self::factory()->post->create();
+		add_post_meta( $post_id3, 'baz', rand_str() );
+		$post_id4 = self::factory()->post->create();
+		add_post_meta( $post_id4, 'froo', rand_str() );
+		$post_id5 = self::factory()->post->create();
+		add_post_meta( $post_id5, 'tango', 'val2' );
+		$post_id6 = self::factory()->post->create();
+		add_post_meta( $post_id6, 'bar', 'val1' );
+
+
+		$this->sync();
+
+		$query = new WP_Query( array(
+			'solr_integrate'         => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'fields'                 => 'ids',
+			'meta_query'             => array(
+				array(
+					'key' => 'foo'
+				),
+				array(
+					'key'   => 'bar',
+					'value' => 'val2'
+				),
+				array(
+					'key' => 'baz'
+				),
+				array(
+					'key' => 'froo'
+				),
+				'relation' => 'OR',
+			),
+		) );
+
+		$expected = array( $post_id, $post_id2, $post_id3, $post_id4 );
+		$returned = array();
+		foreach ( $query->posts as $post ) {
+			$returned[] = $post->ID;
+		}
+
+		$this->assertEqualSets( $expected, $returned );
+	}
+
+
+	public function test_meta_query_relation_and() {
+		$post_id = self::factory()->post->create();
+		add_post_meta( $post_id, 'foo', rand_str() );
+		add_post_meta( $post_id, 'foo', rand_str() );
+		$post_id2 = self::factory()->post->create();
+		add_post_meta( $post_id2, 'bar', 'val2' );
+		add_post_meta( $post_id2, 'foo', rand_str() );
+		$post_id3 = self::factory()->post->create();
+		add_post_meta( $post_id3, 'baz', rand_str() );
+		$post_id4 = self::factory()->post->create();
+		add_post_meta( $post_id4, 'froo', rand_str() );
+		$post_id5 = self::factory()->post->create();
+		add_post_meta( $post_id5, 'tango', 'val2' );
+		$post_id6 = self::factory()->post->create();
+		add_post_meta( $post_id6, 'bar', 'val1' );
+		add_post_meta( $post_id6, 'foo', rand_str() );
+		$post_id7 = self::factory()->post->create();
+		add_post_meta( $post_id7, 'foo', rand_str() );
+		add_post_meta( $post_id7, 'froo', rand_str() );
+		add_post_meta( $post_id7, 'baz', rand_str() );
+		add_post_meta( $post_id7, 'bar', 'val2' );
+
+		$this->sync();
+
+		$query = new WP_Query( array(
+			'meta_query'             => array(
+				array(
+					'key' => 'foo'
+				),
+				array(
+					'key'   => 'bar',
+					'value' => 'val2'
+				),
+				array(
+					'key' => 'baz'
+				),
+				array(
+					'key' => 'froo'
+				),
+				'relation' => 'AND',
+			),
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'fields'                 => 'ids',
+			'solr_integrate'         => true,
+		) );
+
+		$expected = array( $post_id7 );
+		$returned = array();
+		foreach ( $query->posts as $post ) {
+			$returned[] = $post->ID;
+		}
+
+		$this->assertEqualSets( $expected, $returned );
+
+		$query = new WP_Query( array(
+			'meta_query'             => array(
+				array(
+					'key' => 'foo'
+				),
+				array(
+					'key' => 'bar',
+				),
+				'relation' => 'AND',
+			),
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'fields'                 => 'ids',
+			'solr_integrate'         => true,
+		) );
+
+		$expected = array( $post_id2, $post_id6, $post_id7 );
+		$returned = array();
+		foreach ( $query->posts as $post ) {
+			$returned[] = $post->ID;
+		}
+
+		$this->assertEqualSets( $expected, $returned );
+	}
 
 	public function test_meta_empty() {
 
@@ -531,137 +661,6 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		) );
 
 		$expected = array( $p1 );
-		$returned = array();
-		foreach ( $query->posts as $post ) {
-			$returned[] = $post->ID;
-		}
-
-		$this->assertEqualSets( $expected, $returned );
-	}
-
-	public function test_meta_query_relation_or() {
-		$post_id = self::factory()->post->create();
-		add_post_meta( $post_id, 'foo', rand_str() );
-		add_post_meta( $post_id, 'foo', rand_str() );
-		$post_id2 = self::factory()->post->create();
-		add_post_meta( $post_id2, 'bar', 'val2' );
-		$post_id3 = self::factory()->post->create();
-		add_post_meta( $post_id3, 'baz', rand_str() );
-		$post_id4 = self::factory()->post->create();
-		add_post_meta( $post_id4, 'froo', rand_str() );
-		$post_id5 = self::factory()->post->create();
-		add_post_meta( $post_id5, 'tango', 'val2' );
-		$post_id6 = self::factory()->post->create();
-		add_post_meta( $post_id6, 'bar', 'val1' );
-
-
-		$this->sync();
-		sleep( 5 );
-		$query = new WP_Query( array(
-			'solr_integrate'         => true,
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-			'fields'                 => 'ids',
-			'meta_query'             => array(
-				array(
-					'key' => 'foo'
-				),
-				array(
-					'key'   => 'bar',
-					'value' => 'val2'
-				),
-				array(
-					'key' => 'baz'
-				),
-				array(
-					'key' => 'froo'
-				),
-				'relation' => 'OR',
-			),
-		) );
-
-		$expected = array( $post_id, $post_id2, $post_id3, $post_id4 );
-		$returned = array();
-		foreach ( $query->posts as $post ) {
-			$returned[] = $post->ID;
-		}
-
-		$this->assertEqualSets( $expected, $returned );
-	}
-
-
-	public function test_meta_query_relation_and() {
-		$post_id = self::factory()->post->create();
-		add_post_meta( $post_id, 'foo', rand_str() );
-		add_post_meta( $post_id, 'foo', rand_str() );
-		$post_id2 = self::factory()->post->create();
-		add_post_meta( $post_id2, 'bar', 'val2' );
-		add_post_meta( $post_id2, 'foo', rand_str() );
-		$post_id3 = self::factory()->post->create();
-		add_post_meta( $post_id3, 'baz', rand_str() );
-		$post_id4 = self::factory()->post->create();
-		add_post_meta( $post_id4, 'froo', rand_str() );
-		$post_id5 = self::factory()->post->create();
-		add_post_meta( $post_id5, 'tango', 'val2' );
-		$post_id6 = self::factory()->post->create();
-		add_post_meta( $post_id6, 'bar', 'val1' );
-		add_post_meta( $post_id6, 'foo', rand_str() );
-		$post_id7 = self::factory()->post->create();
-		add_post_meta( $post_id7, 'foo', rand_str() );
-		add_post_meta( $post_id7, 'froo', rand_str() );
-		add_post_meta( $post_id7, 'baz', rand_str() );
-		add_post_meta( $post_id7, 'bar', 'val2' );
-
-		$this->sync();
-		sleep( 5 );
-		$query = new WP_Query( array(
-			'meta_query'             => array(
-				array(
-					'key' => 'foo'
-				),
-				array(
-					'key'   => 'bar',
-					'value' => 'val2'
-				),
-				array(
-					'key' => 'baz'
-				),
-				array(
-					'key' => 'froo'
-				),
-				'relation' => 'AND',
-			),
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-			'fields'                 => 'ids',
-			'solr_integrate'         => true,
-		) );
-
-		$expected = array( $post_id7 );
-		$returned = array();
-		foreach ( $query->posts as $post ) {
-			$returned[] = $post->ID;
-		}
-
-		$this->assertEqualSets( $expected, $returned );
-
-		$query = new WP_Query( array(
-			'meta_query'             => array(
-				array(
-					'key' => 'foo'
-				),
-				array(
-					'key' => 'bar',
-				),
-				'relation' => 'AND',
-			),
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-			'fields'                 => 'ids',
-			'solr_integrate'         => true,
-		) );
-
-		$expected = array( $post_id2, $post_id6, $post_id7 );
 		$returned = array();
 		foreach ( $query->posts as $post ) {
 			$returned[] = $post->ID;
