@@ -60,7 +60,7 @@ class Tests_Solr_MetaQuery_2 extends SolrTestBase {
 		add_post_meta( $post_id7, 'bar', 'val2' );
 
 		$this->sync();
-		$this->__run_test_query( '*:*' );
+
 		$query = new WP_Query( array(
 			'meta_query'             => array(
 				array(
