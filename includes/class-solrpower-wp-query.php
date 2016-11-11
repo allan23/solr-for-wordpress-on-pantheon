@@ -269,11 +269,11 @@ class SolrPower_WP_Query {
 			$allowed_keys[] = 'meta_value_num';
 			$allowed_keys   = array_merge( $allowed_keys, array_keys( $meta_clauses ) );
 		}
-
+/*
 		if ( ! in_array( $orderby, $allowed_keys ) ) {
 			return false;
 		}
-
+*/
 		switch ( $orderby ) {
 			case 'post_name':
 			case 'post_author':
