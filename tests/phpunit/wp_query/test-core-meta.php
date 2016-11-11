@@ -54,7 +54,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 
 
 		$this->sync();
-		sleep( 3 );
+
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -109,7 +109,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'froo', rand_str() );
 		add_post_meta( $post_id7, 'baz', rand_str() );
 		add_post_meta( $post_id7, 'bar', 'val2' );
-		sleep( 3 );
+
 		$this->sync();
 
 		$query = new WP_Query( array(
@@ -758,7 +758,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$post_id5 = self::factory()->post->create();
 		add_post_meta( $post_id5, 'foo', rand_str() );
 		$this->sync();
-		sleep( 3 );
+
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(

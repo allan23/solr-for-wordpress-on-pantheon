@@ -153,6 +153,8 @@ class SolrTestBase extends WP_UnitTestCase {
 	 * Perform a content sync to Solr.
 	 */
 	function sync() {
+		sleep(2);
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+		sleep(2);
 	}
 }
