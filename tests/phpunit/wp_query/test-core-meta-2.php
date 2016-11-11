@@ -38,22 +38,22 @@ class Tests_Solr_MetaQuery_2 extends SolrTestBase {
 	}
 
 	public function test_meta_query_relation_and() {
-		$post_id = $this->__create_test_post();
+		$post_id = self::factory()->post->create();
 		add_post_meta( $post_id, 'foo', rand_str() );
 		add_post_meta( $post_id, 'foo', rand_str() );
-		$post_id2 = $this->__create_test_post();
+		$post_id2 = self::factory()->post->create();
 		add_post_meta( $post_id2, 'bar', 'val2' );
 		add_post_meta( $post_id2, 'foo', rand_str() );
-		$post_id3 = $this->__create_test_post();
+		$post_id3 = self::factory()->post->create();
 		add_post_meta( $post_id3, 'baz', rand_str() );
-		$post_id4 = $this->__create_test_post();
+		$post_id4 = self::factory()->post->create();
 		add_post_meta( $post_id4, 'froo', rand_str() );
-		$post_id5 = $this->__create_test_post();
+		$post_id5 = self::factory()->post->create();
 		add_post_meta( $post_id5, 'tango', 'val2' );
-		$post_id6 = $this->__create_test_post();
+		$post_id6 = self::factory()->post->create();
 		add_post_meta( $post_id6, 'bar', 'val1' );
 		add_post_meta( $post_id6, 'foo', rand_str() );
-		$post_id7 = $this->__create_test_post();
+		$post_id7 = self::factory()->post->create();
 		add_post_meta( $post_id7, 'foo', rand_str() );
 		add_post_meta( $post_id7, 'froo', rand_str() );
 		add_post_meta( $post_id7, 'baz', rand_str() );
