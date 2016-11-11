@@ -561,7 +561,7 @@ class SolrPower_Sync {
 			}
 			$last    = absint( $prev ) + 5;
 			$percent = absint( ( floatval( $last ) / floatval( $query->found_posts ) ) * 100 );
-			for ( $idx = 0; $idx < $postcount; $idx ++ ) {
+			for ( $idx = 0; $idx <= $postcount; $idx ++ ) {
 				$postid = $posts[ $idx ];
 
 				$solr        = get_solr();
