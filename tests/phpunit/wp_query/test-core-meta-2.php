@@ -30,11 +30,13 @@ class Tests_Solr_MetaQuery_2 extends SolrTestBase {
 
 		$this->__change_option( 's4wp_index_custom_fields', $this->postmeta );
 		SolrPower_Sync::get_instance()->bulk_sync = true;
+		SolrPower_Sync::get_instance()->debug = true;
 	}
 
 	function tearDown() {
 		parent::tearDown();
 		SolrPower_Sync::get_instance()->bulk_sync = false;
+		SolrPower_Sync::get_instance()->debug = false;
 	}
 
 	public function test_meta_query_relation_and() {

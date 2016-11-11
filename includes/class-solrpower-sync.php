@@ -20,6 +20,7 @@ class SolrPower_Sync {
 	 */
 	var $bulk_sync = false;
 
+	var $debug = false;
 	/**
 	 * Grab instance of object.
 	 * @return SolrPower_Sync
@@ -352,6 +353,9 @@ class SolrPower_Sync {
 				$update = $solr->createUpdate();
 
 				if ( $documents ) {
+					if ($this->debug){
+						print_r(count( $documents ) . ' are being indexed.' . PHP_EOL);
+					}
 					syslog( LOG_INFO, "posting " . count( $documents ) . " documents for blog:" . get_bloginfo( 'wpurl' ) );
 					$update->addDocuments( $documents );
 				} else {
@@ -472,14 +476,11 @@ class SolrPower_Sync {
 					 *
 					 * @param array $post_types Array of post type names for indexing.
 					 */
-					'post_type'              => apply_filters( 'solr_post_types', get_post_types( array( 'exclude_from_search' => false ) ) ),
-					'post_status'            => 'publish',
-					'fields'                 => 'ids',
-					'posts_per_page'         => absint( $limit ),
-					'offset'                 => absint( $prev ),
-					'cache_results'          => false,
-					'update_post_meta_cache' => false,
-					'update_post_term_cache' => false
+					'post_type'      => apply_filters( 'solr_post_types', get_post_types( array( 'exclude_from_search' => false ) ) ),
+					'post_status'    => 'publish',
+					'fields'         => 'ids',
+					'posts_per_page' => absint( $limit ),
+					'offset'         => absint( $prev )
 				);
 				$query   = new WP_Query( $args );
 				$postids = $query->posts;
@@ -546,7 +547,7 @@ class SolrPower_Sync {
 				'offset'                 => absint( $prev ),
 				'cache_results'          => false,
 				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
+				'update_post_term_cache' => false
 			);
 			$query     = new WP_Query( $args );
 			$posts     = $query->posts;
@@ -561,14 +562,7 @@ class SolrPower_Sync {
 			}
 			$last    = absint( $prev ) + 5;
 			$percent = absint( ( floatval( $last ) / floatval( $query->found_posts ) ) * 100 );
-			$solr        = get_solr();
-			foreach ($posts as $the_post){
-				$update      = $solr->createUpdate();
-				$documents[] = $this->build_document( $update->createDocument(), get_post( $the_post ) );
-				$cnt ++;
-			}
-			/**
-			for ( $idx = 0; $idx <= $postcount; $idx ++ ) {
+			for ( $idx = 0; $idx < $postcount; $idx ++ ) {
 				$postid = $posts[ $idx ];
 
 				$solr        = get_solr();
@@ -582,7 +576,7 @@ class SolrPower_Sync {
 					wp_cache_flush();
 					break;
 				}
-			}*/
+			}
 		}
 
 		if ( $documents ) {
