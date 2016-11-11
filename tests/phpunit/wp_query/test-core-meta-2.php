@@ -58,9 +58,9 @@ class Tests_Solr_MetaQuery_2 extends SolrTestBase {
 		add_post_meta( $post_id7, 'froo', rand_str() );
 		add_post_meta( $post_id7, 'baz', rand_str() );
 		add_post_meta( $post_id7, 'bar', 'val2' );
-
+		sleep( 2 );
 		$this->sync();
-
+		sleep( 5 );
 		$query = new WP_Query( array(
 			'meta_query'             => array(
 				array(
@@ -309,6 +309,7 @@ class Tests_Solr_MetaQuery_2 extends SolrTestBase {
 
 		$this->assertEqualSets( $expected, $returned );
 	}
+
 	public function test_meta_query_relation_and_compare_in_same_keys() {
 		$posts = self::factory()->post->create_many( 4 );
 		add_post_meta( $posts[0], 'color', 'orange' );
@@ -396,6 +397,7 @@ class Tests_Solr_MetaQuery_2 extends SolrTestBase {
 
 		$this->assertEqualSets( $expected, $returned );
 	}
+
 	public function test_meta_query_relation_or_compare_equals() {
 		$posts = self::factory()->post->create_many( 4 );
 		add_post_meta( $posts[0], 'color', 'orange' );
