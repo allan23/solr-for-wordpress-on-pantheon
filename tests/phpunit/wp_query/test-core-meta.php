@@ -36,6 +36,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		parent::tearDown();
 		SolrPower_Sync::get_instance()->bulk_sync = false;
 	}
+
 	public function test_meta_query_relation_or() {
 		$post_id = self::factory()->post->create();
 		add_post_meta( $post_id, 'foo', rand_str() );
@@ -108,7 +109,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'froo', rand_str() );
 		add_post_meta( $post_id7, 'baz', rand_str() );
 		add_post_meta( $post_id7, 'bar', 'val2' );
-		sleep(3);
+		sleep( 3 );
 		$this->sync();
 
 		$query = new WP_Query( array(
@@ -757,6 +758,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		$post_id5 = self::factory()->post->create();
 		add_post_meta( $post_id5, 'foo', rand_str() );
 		$this->sync();
+		sleep( 3 );
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'meta_query'             => array(
