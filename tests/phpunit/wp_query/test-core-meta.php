@@ -54,7 +54,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 
 
 		$this->sync();
-
+		sleep( 3 );
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
