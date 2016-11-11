@@ -108,7 +108,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'froo', rand_str() );
 		add_post_meta( $post_id7, 'baz', rand_str() );
 		add_post_meta( $post_id7, 'bar', 'val2' );
-
+		sleep(3);
 		$this->sync();
 
 		$query = new WP_Query( array(
