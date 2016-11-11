@@ -556,7 +556,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 
 
 		$this->sync();
-		sleep(3);
+		sleep( 5 );
 		$query = new WP_Query( array(
 			'solr_integrate'         => true,
 			'update_post_meta_cache' => false,
@@ -613,7 +613,7 @@ class Tests_Solr_MetaQuery extends SolrTestBase {
 		add_post_meta( $post_id7, 'bar', 'val2' );
 
 		$this->sync();
-		sleep( 3 );
+		sleep( 5 );
 		$query = new WP_Query( array(
 			'meta_query'             => array(
 				array(
