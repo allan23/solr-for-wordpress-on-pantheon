@@ -386,7 +386,9 @@ class SolrPower_Sync {
 			}
 		} catch ( Exception $e ) {
 			$this->error_msg = esc_html( $e->getMessage() );
-
+			if ($this->debug){
+				print_r($e->getMessage() . PHP_EOL);
+			}
 			return false;
 		}
 	}
