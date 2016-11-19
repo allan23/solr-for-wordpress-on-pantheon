@@ -147,6 +147,7 @@ class SolrPower_Options {
 		$clean['s4wp_default_operator']       = sanitize_text_field( $options['s4wp_default_operator'] );
 		$clean['s4wp_default_sort']           = sanitize_text_field( $options['s4wp_default_sort'] );
 		$clean['s4wp_solr_initialized']       = 1;
+
 		return $clean;
 	}
 
@@ -211,7 +212,6 @@ class SolrPower_Options {
 
 	/**
 	 * Sets the default options.
-	 * @return array
 	 */
 	function initalize_options() {
 		$options = array();
@@ -252,18 +252,11 @@ class SolrPower_Options {
 	 * Checks to see if any actions were taken on the settings page.
 	 */
 	function check_for_actions() {
-
-		if ( ! isset( $_POST['action'] ) || ! current_user_can( 'manage_options' ) ) {
+		$action = filter_input( INPUT_POST, 'action', FILTER_SANITIZE_STRING );
+		if ( ! $action || ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$action = sanitize_text_field( $_POST['action'] );
 		switch ( $action ) {
-			case 'update':
-				if ( ! $this->check_nonce( 'solr_update' ) ) {
-					return;
-				}
-				$this->save_options();
-				break;
 			case 'ping':
 				if ( ! $this->check_nonce( 'solr_ping' ) ) {
 					return;
@@ -301,7 +294,7 @@ class SolrPower_Options {
 				}
 				SolrPower_Sync::get_instance()->delete_all();
 				$output    = SolrPower_Api::get_instance()->submit_schema();
-				$this->msg = esc_html__( 'All Indexed Pages Deleted!', 'solr-for-wordpress-on-pantheon') .'<br />' . esc_html( $output );
+				$this->msg = esc_html__( 'All Indexed Pages Deleted!', 'solr-for-wordpress-on-pantheon' ) . '<br />' . esc_html( $output );
 				break;
 
 			case 'run_query':
@@ -324,8 +317,9 @@ class SolrPower_Options {
 	 * @return bool
 	 */
 	private function check_nonce( $field ) {
-		if ( ! isset( $_POST[ $field ] )
-		     || ! wp_verify_nonce( $_POST[ $field ], 'solr_action' )
+		$nonce = filter_input( INPUT_POST, $field, FILTER_SANITIZE_STRING );
+		if ( ! $nonce
+		     || ! wp_verify_nonce( $nonce, 'solr_action' )
 		) {
 			$this->msg = esc_html__( 'Action failed. Please try again.' . $field, 'solr-for-wordpress-on-pantheon' );
 

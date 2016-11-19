@@ -21,8 +21,8 @@
     THE SOFTWARE.
 */
 // Load up options.
-$s4wp_settings = solr_options();
-
+$s4wp_settings    = solr_options();
+$settings_updated = filter_input( INPUT_GET, 'settings-updated', FILTER_SANITIZE_STRING );
 // Display a message if one is set.
 if ( ! is_null( SolrPower_Options::get_instance()->msg ) ) {
 	?>
@@ -33,15 +33,17 @@ if ( ! is_null( SolrPower_Options::get_instance()->msg ) ) {
 }
 ?>
 
-<div class="wrap">
+	<div class="wrap">
 	<h2><?php esc_html_e( 'Solr Power', 'solr-for-wordpress-on-pantheon' ) ?></h2>
 
 
 	<h2 class="nav-tab-wrapper" id="solr-tabs">
 
-		<a class="nav-tab <?php echo  ( !isset( $_GET['settings-updated'] ) ) ? 'nav-tab-active' : ''; ?>" id="solr_info-tab"
+		<a class="nav-tab <?php echo ( ! $settings_updated ) ? 'nav-tab-active' : ''; ?>"
+		   id="solr_info-tab"
 		   href="#top#solr_info">Info</a>
-		<a class="nav-tab <?php echo  ( isset( $_GET['settings-updated'] ) ) ? 'nav-tab-active' : ''; ?>" id="solr_indexing-tab"
+		<a class="nav-tab <?php echo ( $settings_updated ) ? 'nav-tab-active' : ''; ?>"
+		   id="solr_indexing-tab"
 		   href="#top#solr_indexing">Indexing</a>
 		<a class="nav-tab" id="solr_action-tab"
 		   href="#top#solr_action">Actions</a>
@@ -104,13 +106,12 @@ if ( ! is_null( SolrPower_Options::get_instance()->msg ) ) {
 		<?php } ?>
 		<br class="clear">
 	</div>
-	<?php
-	if ( is_multisite() ) {
-		$action='settings.php?page=solr-power';
-	} else {
-		$action='options-general.php?page=solr-power';
-	}
-	include 'views/options/indexing.php';
-	include 'views/options/action.php';
-	include 'views/options/query.php';
-	?>
+<?php
+if ( is_multisite() ) {
+	$action = 'settings.php?page=solr-power';
+} else {
+	$action = 'options-general.php?page=solr-power';
+}
+include 'views/options/indexing.php';
+include 'views/options/action.php';
+include 'views/options/query.php';

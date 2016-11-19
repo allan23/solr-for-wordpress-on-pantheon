@@ -12,9 +12,9 @@ function s4wp_search_form() {
 	$date_str = esc_html__( 'Date', 'solr-for-wordpress-on-pantheon' );
 	$last_modified_str = esc_html__( 'Last Modified', 'solr-for-wordpress-on-pantheon' );
 
-	if ( $sort == 'date' ) {
+	if ('date' === $sort ) {
 		$sortval = '<option value="score">' . $score_str . '</option><option value="date" selected="selected">' . $date_str . '</option><option value="modified">' . $last_modified_str . '</option>';
-	} else if ( $sort == 'modified' ) {
+	} else if ('modified' === 'sort' ) {
 		$sortval = '<option value="score">' . $score_str . '</option><option value="date">' . $date_str . '</option><option value="modified" selected="selected">' . $last_modified_str . '</option>';
 	} else {
 		$sortval = '<option value="score" selected="selected">' . $score_str . '</option><option value="date">' . $date_str . '</option><option value="modified">' . $last_modified_str . '</option>';
@@ -23,7 +23,7 @@ function s4wp_search_form() {
 	$desc_str = esc_html__( 'Descending', 'solr-for-wordpress-on-pantheon' );
 	$asc_str = esc_html__( 'Ascending', 'solr-for-wordpress-on-pantheon' );
 	
-	if ( $order == 'asc' ) {
+	if ( 'asc' === $order ) {
 		$orderval = '<option value="desc">' . $desc_str . '</option><option value="asc" selected="selected">' . $asc_str . '</option>';
 	} else {
 		$orderval = '<option value="desc" selected="selected">' . $desc_str . '</option><option value="asc">' . $asc_str . '</option>';
@@ -45,9 +45,8 @@ function s4wp_search_results() {
 	$sort	 = filter_input( INPUT_GET, 'sort', FILTER_SANITIZE_STRING );
 	$order	 = filter_input( INPUT_GET, 'order', FILTER_SANITIZE_STRING );
 	$isdym	 = filter_input( INPUT_GET, 'isdym', FILTER_SANITIZE_STRING );
-	$server	 = filter_input( INPUT_GET, 'server', FILTER_SANITIZE_STRING );
 
-	$plugin_s4wp_settings	 = s4wp_get_option();
+	$plugin_s4wp_settings	 = solr_options();
 	$output_info			 = $plugin_s4wp_settings[ 's4wp_output_info' ];
 	$output_pager			 = $plugin_s4wp_settings[ 's4wp_output_pager' ];
 	$output_facets			 = $plugin_s4wp_settings[ 's4wp_output_facets' ];
@@ -69,7 +68,7 @@ function s4wp_search_results() {
 
 	//if server value has been set lets set it up here
 	// and add it to all the search urls henceforth
-	$serverval = isset( $server ) ? ('&server=' . $server) : '';
+	$serverval = '';
 
 	# set some default values
 	if ( !$offset ) {
@@ -118,8 +117,7 @@ function s4wp_search_results() {
 			} else {
 				$selectedfacet[ 'removelink' ] = htmlspecialchars( sprintf( "?ssearch=%s", urlencode( $qry ) ) );
 			}
-			//if server is set add it on the end of the url
-			$selectedfacet[ 'removelink' ] .=$serverval;
+
 
 			$fqstr = $fqstr . urlencode( '||' ) . $splititm[ 0 ] . ':' . urlencode( $splititm[ 1 ] );
 
@@ -130,7 +128,7 @@ function s4wp_search_results() {
 
 	if ( $qry ) {
 
-		$results = s4wp_query( $qry, $offset, $count, $fqitms, $sortby, $order, $server );
+		$results = SolrPower_Api::get_instance()->query( $qry, $offset, $count, $fqitms, $sortby, $order );
 
 		if ( $results ) {
 			$data		 = $results->getData();
@@ -150,16 +148,16 @@ function s4wp_search_results() {
 				$currentpage = ceil( $offset / $count ) + 1;
 				$pagerout	 = array();
 
-				if ( $numpages == 0 ) {
+				if ( 0 === $numpages ) {
 					$numpages = 1;
 				}
 
 				foreach ( range( 1, $numpages ) as $pagenum ) {
-					if ( $pagenum != $currentpage ) {
+					if ( $pagenum !== $currentpage ) {
 						$offsetnum			 = ($pagenum - 1) * $count;
 						$pageritm			 = array();
 						$pageritm[ 'page' ]	 = sprintf( "%d", $pagenum );
-						if ( !isset( $sortby ) || $sortby == "" ) {
+						if ( !isset( $sortby ) || $sortby === "" ) {
 							$pagersortby = "date";
 							$pagerorder	 = "desc";
 						} else {
@@ -199,7 +197,7 @@ function s4wp_search_results() {
 						$facetinfo[ 'name' ] = ucwords( preg_replace( '/_str$/i', '', $facetfield ) );
 
 						# categories is a taxonomy
-						if ( $categoy_as_taxonomy && $facetfield == 'categories' ) {
+						if ( $categoy_as_taxonomy && $facetfield === 'categories' ) {
 							# generate taxonomy and counts
 							$taxo = array();
 							foreach ( $facet as $facetval => $facetcnt ) {
@@ -231,7 +229,7 @@ function s4wp_search_results() {
 
 			$resultout = array();
 
-			if ( $response[ 'numFound' ] != 0 ) {
+			if ( $response[ 'numFound' ] !== 0 ) {
 				foreach ( $response[ 'docs' ] as $doc ) {
 
 					$resultinfo					 = array();
@@ -316,7 +314,7 @@ function s4wp_print_facet_items( $items, $pre = "<ul>", $post = "</ul>", $before
 function s4wp_get_output_taxo( $facet, $taxo, $prefix, $fqstr, $field ) {
 	$qry = filter_input( INPUT_GET, 's', FILTER_SANITIZE_STRING );
 
-	if ( count( $taxo ) == 0 ) {
+	if ( count( $taxo ) === 0 ) {
 		return;
 	} else {
 		$facetitms = array();
@@ -340,7 +338,7 @@ function s4wp_get_output_taxo( $facet, $taxo, $prefix, $fqstr, $field ) {
 
 function s4wp_gen_taxo_array( $in, $vals ) {
 
-	if ( count( $vals ) == 1 ) {
+	if ( count( $vals ) === 1 ) {
 		if ( isset( $in[ $vals[ 0 ] ] ) && !$in[ $vals[ 0 ] ] ) {
 			$in[ $vals[ 0 ] ] = array();
 		}

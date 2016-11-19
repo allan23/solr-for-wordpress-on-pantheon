@@ -48,19 +48,25 @@ class SolrPower_Sync {
 
 		$post_info = get_post( $post_id );
 
-		$plugin_s4wp_settings = solr_options();
-
 		$this->handle_status_change( $post_id, $post_info );
-		if ( $post_info->post_type == 'revision' || $post_info->post_status != 'publish' ) {
+		if ( $post_info->post_type === 'revision'
+		     || $post_info->post_status !== 'publish'
+		) {
 			return;
 		}
 
 		$this->handle_status_change( $post_id, $post_info );
-		if ( $post_info->post_type == 'revision' || $post_info->post_status != 'publish' ) {
+		if ( $post_info->post_type === 'revision'
+		     || $post_info->post_status !== 'publish'
+		) {
 			return;
 		}
 		# make sure this blog is not private or a spam if indexing on a multisite install
-		if ( is_multisite() && ( $current_blog->public != 1 || $current_blog->spam == 1 || $current_blog->archived == 1 ) ) {
+		if ( is_multisite()
+		     && ( $current_blog->public !== 1
+		          || $current_blog->spam === 1
+		          || $current_blog->archived === 1 )
+		) {
 			return;
 		}
 		$docs   = array();
@@ -78,12 +84,7 @@ class SolrPower_Sync {
 
 	function handle_delete( $post_id ) {
 		global $current_blog;
-		$post_info            = get_post( $post_id );
-		$plugin_s4wp_settings = solr_options();
-		$delete_page          = $plugin_s4wp_settings['s4wp_delete_page'];
-		$delete_post          = $plugin_s4wp_settings['s4wp_delete_post'];
-
-
+		$post_info = get_post( $post_id );
 		if ( is_multisite() ) {
 			$this->delete( get_current_blog_id() . '_' . $post_info->ID );
 		} else {
@@ -99,7 +100,7 @@ class SolrPower_Sync {
 	function delete_blog( $blogid ) {
 		try {
 			$solr = get_solr();
-			if ( ! $solr == null ) {
+			if ( $solr !== null ) {
 				$update = $solr->createUpdate();
 				$update->addDeleteQuery( "blogid:{$blogid}" );
 				$update->addCommit();
@@ -117,10 +118,10 @@ class SolrPower_Sync {
 		}
 
 		wp_cache_flush();
-		$plugin_s4wp_settings = solr_options();
+		$options = solr_options();
 		switch_to_blog( $blogid );
 		wp_cache_flush();
-		s4wp_update_option( $plugin_s4wp_settings );
+		SolrPower_Options::get_instance()->update_option( $options );
 		restore_current_blog();
 		wp_cache_flush();
 	}
@@ -141,10 +142,10 @@ class SolrPower_Sync {
 			$update = $solr->createUpdate();
 
 			for ( $idx = 0; $idx < count( $postids ); $idx ++ ) {
-				$postid      = $ids[ $idx ];
+				$postid      = $postids[ $idx ];
 				$documents[] = $this->build_document( $update->createDocument(), get_blog_post( $blogid, $postid->ID ), $bloginfo->domain, $bloginfo->path );
 				$cnt ++;
-				if ( $cnt == $batchsize ) {
+				if ( $cnt === $batchsize ) {
 					$this->post( $documents );
 					$cnt       = 0;
 					$documents = array();
@@ -255,7 +256,7 @@ class SolrPower_Sync {
 			$doc->setField( 'post_status', $post_info->post_status );
 
 			$categories = get_the_category( $post_info->ID );
-			if ( ! $categories == null ) {
+			if ( null !== $categories ) {
 				foreach ( $categories as $category ) {
 					if ( $categoy_as_taxonomy ) {
 						$doc->addField( 'categories', get_category_parents( $category->cat_ID, false, '^^' ) );
@@ -297,7 +298,7 @@ class SolrPower_Sync {
 			}
 
 			$tags = get_the_tags( $post_info->ID );
-			if ( ! $tags == null ) {
+			if ( null !== $tags ) {
 				foreach ( $tags as $tag ) {
 					$doc->addField( 'tags', $tag->name );
 					$doc->addField( 'tags_slug_str', $tag->slug );
@@ -321,7 +322,7 @@ class SolrPower_Sync {
 									$doc->addField( $field_name . '_d', floatval( preg_replace( '/[^-0-9\.]/', '', $value ) ) );
 									$doc->addField( $field_name . '_f', floatval( preg_replace( '/[^-0-9\.]/', '', $value ) ) );
 								}
-								$doc->addField( $field_name . '_s', $value  );
+								$doc->addField( $field_name . '_s', $value );
 							}
 							$doc->addField( $field_name . '_srch', $value );
 							$used[] = $field_name;
@@ -340,7 +341,7 @@ class SolrPower_Sync {
 	function post( $documents, $commit = true, $optimize = false ) {
 		try {
 			$solr = get_solr();
-			if ( ! $solr == null ) {
+			if ( null !== $solr ) {
 
 				$update = $solr->createUpdate();
 
@@ -380,7 +381,7 @@ class SolrPower_Sync {
 	function delete( $doc_id ) {
 		try {
 			$solr = get_solr();
-			if ( ! $solr == null ) {
+			if ( null !== $solr ) {
 				$update = $solr->createUpdate();
 				$update->addDeleteById( $doc_id );
 				$update->addCommit();
@@ -400,7 +401,7 @@ class SolrPower_Sync {
 		try {
 			$solr = get_solr();
 
-			if ( ! $solr == null ) {
+			if ( null !== $solr ) {
 				$update = $solr->createUpdate();
 				$update->addDeleteQuery( '*:*' );
 				$update->addCommit();
@@ -499,7 +500,7 @@ class SolrPower_Sync {
 					$update      = $solr->createUpdate();
 					$documents[] = $this->build_document( $update->createDocument(), get_blog_post( $blog_id, $postid ), substr( get_bloginfo( 'wpurl' ), 7 ), $current_site->path );
 					$cnt ++;
-					if ( $cnt == $batchsize ) {
+					if ( $cnt === $batchsize ) {
 						$this->post( $documents, true, false );
 						$this->post( false, true, false );
 						wp_cache_flush();
@@ -538,11 +539,15 @@ class SolrPower_Sync {
 			$query     = new WP_Query( $args );
 			$posts     = $query->posts;
 			$postcount = count( $posts );
-			if ( 0 == $postcount ) {
-				$end     = true;
-				$results = sprintf( "{\"type\": \"" . $post_type . "\", \"last\": \"%s\", \"end\": true, \"percent\": \"%.2f\"}", $last, 100 );
+			if ( 0 === $postcount ) {
+				$results = array(
+					'type'    => $post_type,
+					'last'    => $last,
+					'end'     => true,
+					'percent' => 100
+				);
 				if ( $echo ) {
-					echo $results;
+					echo wp_json_encode( $results );
 				}
 				die();
 			}
@@ -555,7 +560,7 @@ class SolrPower_Sync {
 				$update      = $solr->createUpdate();
 				$documents[] = $this->build_document( $update->createDocument(), get_post( $postid ) );
 				$cnt ++;
-				if ( $cnt == $batchsize ) {
+				if ( $cnt === $batchsize ) {
 					$this->post( $documents, true, false );
 					$cnt       = 0;
 					$documents = array();
@@ -570,17 +575,27 @@ class SolrPower_Sync {
 		}
 
 		if ( 100 <= $percent ) {
-			$results = sprintf( "{\"type\": \"" . $post_type . "\", \"last\": \"%s\", \"end\": true, \"percent\": \"%.2f\"}", $last, 100 );
+			$results = array(
+				'type'    => $post_type,
+				'last'    => $last,
+				'end'     => true,
+				'percent' => 100
+			);
 		} else {
-			$results = sprintf( "{\"type\": \"" . $post_type . "\", \"last\": \"%s\", \"end\": false, \"percent\": \"%.2f\"}", $last, $percent );
+			$results = array(
+				'type'    => $post_type,
+				'last'    => $last,
+				'end'     => false,
+				'percent' => $percent
+			);
 		}
 		if ( $echo ) {
-			echo $results;
+			echo wp_json_encode( $results );
 
-			return;
+			die();
 		}
 
-		return $results;
+		return wp_json_encode( $results );
 	}
 
 	function format_date( $thedate ) {

@@ -21,8 +21,11 @@ class SolrPower {
 	}
 
 	function __construct() {
-		add_action( 'template_redirect', array( $this, 'template_redirect' ), 1 );
-		add_action( 'wp_enqueue_scripts', array( $this, 'autosuggest_head' ) );
+		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_STRING );
+		if ( 'autocomplete' === $method ) {
+			add_action( 'template_redirect', array( $this, 'template_redirect' ), 1 );
+			add_action( 'wp_enqueue_scripts', array( $this, 'autosuggest_head' ) );
+		}
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_head' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'add_scripts' ) );
 		add_filter( 'plugin_action_links', array( $this, 'plugin_settings_link' ), 10, 2 );
@@ -37,14 +40,14 @@ class SolrPower {
 		// Check to see if we have  environment variables. If not, bail. If so, create the initial options.
 
 		if ( $errMessage = SolrPower::get_instance()->sanity_check() ) {
-			wp_die( $errMessage );
+			wp_die( esc_html( $errMessage ) );
 		}
 
 		// Don't try to send a schema if we're not on Pantheon servers.
 		if ( ! defined( 'SOLR_PATH' ) ) {
 			$schemaSubmit = SolrPower_Api::get_instance()->submit_schema();
 			if ( strpos( $schemaSubmit, 'Error' ) ) {
-				wp_die( 'Submitting the schema failed with the message ' . $errMessage );
+				wp_die( 'Submitting the schema failed with the message ' . esc_html( $errMessage ) );
 			}
 		}
 		SolrPower_Options::get_instance()->initalize_options();
@@ -98,8 +101,17 @@ class SolrPower {
 		wp_localize_script( 'solr-js', 'solr', $solr_js );
 	}
 
+	/**
+	 * Display a settings link on the plugins page.
+	 *
+	 * @param array $links
+	 * @param string $file
+	 *
+	 * @return array
+	 */
 	function plugin_settings_link( $links, $file ) {
-		if ( $file != plugin_basename( SOLR_POWER_PATH . 'solr-power.php' ) ) {
+
+		if ( $file !== plugin_basename( SOLR_POWER_PATH . '/solr-power.php' ) ) {
 			return $links;
 		}
 
@@ -124,14 +136,13 @@ class SolrPower {
 
 		// not a search page; don't do anything and return
 		// thanks to the Better Search plugin for the idea:  http://wordpress.org/extend/plugins/better-search/
-		$search       = stripos( $_SERVER['REQUEST_URI'], '?ssearch=' );
-		$autocomplete = stripos( $_SERVER['REQUEST_URI'], '?method=autocomplete' );
-
-		if ( ( $search || $autocomplete ) == false ) {
+		$search = filter_input( INPUT_GET, 'ssearch', FILTER_SANITIZE_STRING );
+		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_STRING );
+		if ( ( $search || $method ) === false ) {
 			return;
 		}
 
-		if ( $autocomplete ) {
+		if ( 'autocomplete' === $method ) {
 			$q     = filter_input( INPUT_GET, 'q', FILTER_SANITIZE_STRING );
 			$limit = filter_input( INPUT_GET, 'limit', FILTER_SANITIZE_STRING );
 
@@ -143,10 +154,10 @@ class SolrPower {
 		if ( file_exists( TEMPLATEPATH . '/s4wp_search.php' ) ) {
 			// use theme file
 			include_once( TEMPLATEPATH . '/s4wp_search.php' );
-		} else if ( file_exists( dirname( __FILE__ ) . '/template/s4wp_search.php' ) ) {
+		} else if ( file_exists( SOLR_POWER_PATH . '/template/s4wp_search.php' ) ) {
 			// use plugin supplied file
 			add_action( 'wp_head', array( $this, 'default_head' ) );
-			include_once( dirname( __FILE__ ) . '/template/s4wp_search.php' );
+			include_once( SOLR_POWER_PATH . '/template/s4wp_search.php' );
 		} else {
 			// no template files found, just continue on like normal
 			// this should get to the normal WordPress search results
@@ -172,12 +183,12 @@ class SolrPower {
 		$query->setLimit( $limit );
 
 		$response = $solr->terms( $query );
-		if ( ! $response->getResponse()->getStatusCode() == 200 ) {
+		if ( ! $response->getResponse()->getStatusCode() === 200 ) {
 			return;
 		}
 		$terms = $response->getResults();
 		foreach ( $terms['spell'] as $term => $count ) {
-			printf( "%s\n", $term );
+			printf( "%s\n", esc_attr( $term ) );
 		}
 	}
 

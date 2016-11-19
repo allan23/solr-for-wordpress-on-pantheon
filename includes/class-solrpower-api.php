@@ -47,7 +47,7 @@ class SolrPower_Api {
 		// So we'll do it ourselves
 
 		$returnValue = '';
-		$upload_dir  = wp_upload_dir();
+
 
 		// Let's check for a custom Schema.xml. It MUST be located in
 		// wp-content/uploads/solr-for-wordpress-on-pantheon/schema.xml
@@ -149,10 +149,6 @@ class SolrPower_Api {
 	 * @return Solarium\Client Solr service object
 	 */
 	function get_solr() {
-
-		# get the connection options
-		$plugin_s4wp_settings = solr_options();
-
 		/*
 		 * Check for the SOLR_POWER_SCHEME constant.
 		 * If it exists and is "http" or "https", use it as the default scheme value.
@@ -198,7 +194,6 @@ class SolrPower_Api {
 		         $solarium_config['endpoint']['localhost']['port'] and
 		         $solarium_config['endpoint']['localhost']['path'] )
 		) {
-			syslog( LOG_ERR, "host, port or path are empty, host:$host, port:$port, path:$path" );
 
 			return null;
 		}
@@ -225,7 +220,7 @@ class SolrPower_Api {
 	function optimize() {
 		try {
 			$solr = get_solr();
-			if ( ! $solr == null ) {
+			if ( null !== $solr ) {
 				$update = $solr->createUpdate();
 				$update->addOptimize();
 				$solr->update( $update );
@@ -246,12 +241,12 @@ class SolrPower_Api {
 	 * @param $fq
 	 * @param $sortby
 	 * @param $order
-	 * @param string $server
+	 * @param string $fields
 	 *
 	 * @return Solarium\QueryType\Select\Result\Result
 	 */
 	function query( $qry, $offset, $count, $fq, $sortby, $order, $fields = null ) {
-		//NOTICE: does this needs to be cached to stop the db being hit to grab the options everytime search is being done.
+
 		$plugin_s4wp_settings = solr_options();
 
 		$solr = get_solr();
@@ -268,6 +263,7 @@ class SolrPower_Api {
 	 * @param $sortby
 	 * @param $order
 	 * @param $plugin_s4wp_settings
+	 * @param $fields
 	 *
 	 * @return Solarium\QueryType\Select\Result\Result
 	 */

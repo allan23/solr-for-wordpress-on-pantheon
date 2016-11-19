@@ -40,8 +40,8 @@ function solr_power_PHP_admin_notice() {
 	<div class="error">
 		<p>
 			<?php
-			if ( isset( $_GET['activate'] ) ) {
-				unset( $_GET['activate'] );
+			if ( isset( $_GET['activate'] ) ) { // Input Var Ok
+				unset( $_GET['activate'] ); // Input Var Ok
 
 				echo wp_kses_post( __(
 					'The Solr Power plugin requires PHP 5.4 to function properly and <strong>has not</strong> been activated.<br />' .
@@ -75,8 +75,8 @@ function solr_power_env_variables_admin_notice() {
 	<div class="error">
 		<p>
 			<?php
-			if ( isset( $_GET['activate'] ) ) {
-				unset( $_GET['activate'] );
+			if ( isset( $_GET['activate'] ) ) { //Input Var ok
+				unset( $_GET['activate'] ); // Input Var ok
 
 				echo wp_kses_post(__(
 					'The Solr Power plugin requires environment variables for <pre>PANTHEON_INDEX_HOST</pre> and <pre>PANTHEON_INDEX_PORT</pre> to function properly.<br />' .
@@ -132,6 +132,7 @@ if ( version_compare( PHP_VERSION, '5.4', '<' ) ) {
 
 	/**
 	 * Helper function to return Solr object.
+	 * @return Solarium\Client Solr service object
 	 */
 	function get_solr() {
 		return SolrPower_Api::get_instance()->get_solr();
