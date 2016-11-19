@@ -37,7 +37,7 @@ class SolrPower_Options {
 		if ( ! is_multisite() ) {
 			add_options_page( 'Solr Options', 'Solr Options', 'manage_options', 'solr-power', array(
 				$this,
-				'options_page'
+				'options_page',
 			) );
 		}
 	}
@@ -45,7 +45,7 @@ class SolrPower_Options {
 	function add_network_pages() {
 		add_submenu_page( 'settings.php', 'Solr Options', 'Solr Options', 'manage_options', 'solr-power', array(
 			$this,
-			'options_page'
+			'options_page',
 		) );
 	}
 
@@ -199,12 +199,12 @@ class SolrPower_Options {
 	 */
 	function filter_list2str( $input ) {
 		if ( ! is_array( $input ) ) {
-			return "";
+			return '';
 		}
 
 		$outval = implode( ',', $input );
 		if ( ! $outval ) {
-			$outval = "";
+			$outval = '';
 		}
 
 		return $outval;
@@ -321,7 +321,7 @@ class SolrPower_Options {
 		if ( ! $nonce
 		     || ! wp_verify_nonce( $nonce, 'solr_action' )
 		) {
-			$this->msg = esc_html__( 'Action failed. Please try again.' . $field, 'solr-for-wordpress-on-pantheon' );
+			$this->msg = esc_html__( 'Action failed. Please try again.', 'solr-for-wordpress-on-pantheon' );
 
 			return false;
 		}
@@ -356,7 +356,7 @@ class SolrPower_Options {
 		$header   = $data['responseHeader'];
 
 		$out['hits']  = $response['numFound'];
-		$out['qtime'] = sprintf( __( "%.3f", 'solr-for-wordpress-on-pantheon' ), $header['QTime'] / 1000 );
+		$out['qtime'] = sprintf( '%.3f', $header['QTime'] / 1000 );
 
 
 		$this->msg = sprintf( '<p><strong>%s "' . esc_html( $qry ) . '
@@ -501,12 +501,12 @@ class SolrPower_Options {
 
 		$this->add_field( 's4wp_default_operator', 'Default Search Operator', $section, 'radio', null, array(
 			'OR',
-			'AND'
+			'AND',
 		) );
 
 		$this->add_field( 's4wp_default_sort', 'Default Sort', $section, 'select', null, array(
 			'score',
-			'displaydate'
+			'displaydate',
 		) );
 	}
 
@@ -523,12 +523,12 @@ class SolrPower_Options {
 	private function add_field( $name, $title, $section, $type, $filter = null, $choices = null ) {
 		add_settings_field( $name, $title, array(
 			$this,
-			'render_field'
+			'render_field',
 		), 'solr-power', $section, array(
 			'field'   => $name,
 			'type'    => $type,
 			'filter'  => $filter,
-			'choices' => $choices
+			'choices' => $choices,
 		) );
 	}
 

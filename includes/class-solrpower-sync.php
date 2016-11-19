@@ -49,23 +49,23 @@ class SolrPower_Sync {
 		$post_info = get_post( $post_id );
 
 		$this->handle_status_change( $post_id, $post_info );
-		if ( $post_info->post_type === 'revision'
-		     || $post_info->post_status !== 'publish'
+		if ( 'revision' === $post_info->post_type
+		     || 'publish' !== $post_info->post_status
 		) {
 			return;
 		}
 
 		$this->handle_status_change( $post_id, $post_info );
-		if ( $post_info->post_type === 'revision'
-		     || $post_info->post_status !== 'publish'
+		if ( 'revision' === $post_info->post_type
+		     || 'publish' === $post_info->post_status
 		) {
 			return;
 		}
 		# make sure this blog is not private or a spam if indexing on a multisite install
 		if ( is_multisite()
-		     && ( $current_blog->public !== 1
-		          || $current_blog->spam === 1
-		          || $current_blog->archived === 1 )
+		     && ( 1 !== $current_blog->public
+		          || 1 !== $current_blog->spam
+		          || 1 !== $current_blog->archived )
 		) {
 			return;
 		}
@@ -100,7 +100,7 @@ class SolrPower_Sync {
 	function delete_blog( $blogid ) {
 		try {
 			$solr = get_solr();
-			if ( $solr !== null ) {
+			if ( null !== $solr ) {
 				$update = $solr->createUpdate();
 				$update->addDeleteQuery( "blogid:{$blogid}" );
 				$update->addCommit();
@@ -135,8 +135,8 @@ class SolrPower_Sync {
 		$bloginfo = get_blog_details( $blogid, false );
 
 		if ( $bloginfo->public && ! $bloginfo->archived && ! $bloginfo->spam && ! $bloginfo->deleted ) {
-			$query   = $wpdb->prepare( "SELECT ID FROM %s WHERE post_type = 'post' and post_status = 'publish';", $wpdb->base_prefix . $blogid . '_posts' );
-			$postids = $wpdb->get_results( $query );
+
+			$postids = $wpdb->get_results( $wpdb->prepare( "SELECT ID FROM %s WHERE post_type = 'post' and post_status = 'publish';", $wpdb->base_prefix . $blogid . '_posts' ) );
 
 			$solr   = get_solr();
 			$update = $solr->createUpdate();
@@ -195,9 +195,13 @@ class SolrPower_Sync {
 		if ( $post_info ) {
 
 			# check if we need to exclude this document
-			if ( is_multisite() && in_array( substr( site_url(), 7 ) . $post_info->ID, (array) $exclude_ids ) ) {
+			if ( is_multisite()
+			     && in_array( substr( site_url(), 7 ) . $post_info->ID, (array) $exclude_ids, true )
+			) {
 				return null;
-			} else if ( ! is_multisite() && in_array( $post_info->ID, (array) $exclude_ids ) ) {
+			} elseif ( ! is_multisite()
+			           && in_array( $post_info->ID, (array) $exclude_ids, true )
+			) {
 				return null;
 			}
 
@@ -287,7 +291,7 @@ class SolrPower_Sync {
 				if ( (array) $terms === $terms ) {
 					//we are creating *_taxonomy as dynamic fields using our schema
 					//so lets set up all our taxonomies in that format
-					$parent = $parent . "_taxonomy";
+					$parent = $parent . '_taxonomy';
 					foreach ( $terms as $term ) {
 						$doc->addField( $parent . '_str', $term->name );
 						$doc->addField( $parent . '_slug_str', $term->slug );
@@ -316,7 +320,7 @@ class SolrPower_Sync {
 
 						foreach ( $field as $key => $value ) {
 							$doc->addField( $field_name . '_str', $value );
-							if ( ! in_array( $field_name, $used ) ) {
+							if ( ! in_array( $field_name, $used, true ) ) {
 								if ( is_numeric( $value ) ) {
 									$doc->addField( $field_name . '_i', absint( $value ) );
 									$doc->addField( $field_name . '_d', floatval( preg_replace( '/[^-0-9\.]/', '', $value ) ) );
@@ -346,14 +350,14 @@ class SolrPower_Sync {
 				$update = $solr->createUpdate();
 
 				if ( $documents ) {
-					syslog( LOG_INFO, "posting " . count( $documents ) . " documents for blog:" . get_bloginfo( 'wpurl' ) );
+					syslog( LOG_INFO, 'posting ' . count( $documents ) . ' documents for blog:' . get_bloginfo( 'wpurl' ) );
 					$update->addDocuments( $documents );
 				} else {
-					syslog( LOG_INFO, "posting failed documents for blog:" . get_bloginfo( 'wpurl' ) );
+					syslog( LOG_INFO, 'posting failed documents for blog:' . get_bloginfo( 'wpurl' ) );
 				}
 
 				if ( $commit ) {
-					syslog( LOG_INFO, "telling Solr to commit" );
+					syslog( LOG_INFO, 'telling Solr to commit' );
 					$update->addCommit();
 					$solr->update( $update );
 				}
@@ -362,11 +366,11 @@ class SolrPower_Sync {
 					$update = $solr->createUpdate();
 					$update->addOptimize();
 					$solr->update( $update );
-					syslog( LOG_INFO, "Optimizing: " . get_bloginfo( 'wpurl' ) );
+					syslog( LOG_INFO, 'Optimizing: ' . get_bloginfo( 'wpurl' ) );
 				}
 				wp_cache_delete( 'solr_index_stats', 'solr' );
 			} else {
-				syslog( LOG_ERR, "failed to get a solr instance created" );
+				syslog( LOG_ERR, 'failed to get a solr instance created' );
 				$this->error_msg = esc_html( 'failed to get a solr instance created' );
 
 				return false;
@@ -422,7 +426,7 @@ class SolrPower_Sync {
 		$documents = array();
 		$cnt       = 0;
 		$batchsize = 500;
-		$last      = "";
+		$last      = '';
 		$found     = false;
 		$end       = false;
 		$percent   = 0;
@@ -434,13 +438,13 @@ class SolrPower_Sync {
 		if ( is_multisite() ) {
 
 			// there is potential for this to run for an extended period of time, depending on the # of blgos
-			syslog( LOG_ERR, "starting batch import, setting max execution time to unlimited" );
+			syslog( LOG_ERR, 'starting batch import, setting max execution time to unlimited' );
 			ini_set( 'memory_limit', '1024M' );
 			set_time_limit( 0 );
 
 			// get a list of blog ids
 			$bloglist = $wpdb->get_col( "SELECT * FROM {$wpdb->base_prefix}blogs WHERE spam = 0 AND deleted = 0", 0 );
-			syslog( LOG_INFO, "pushing posts from " . count( $bloglist ) . " blogs into Solr" );
+			syslog( LOG_INFO, 'pushing posts from ' . count( $bloglist ) . ' blogs into Solr' );
 			foreach ( $bloglist as $bloginfo ) {
 
 				// for each blog we need to import we get their id
@@ -470,7 +474,7 @@ class SolrPower_Sync {
 					'post_status'    => 'publish',
 					'fields'         => 'ids',
 					'posts_per_page' => absint( $limit ),
-					'offset'         => absint( $prev )
+					'offset'         => absint( $prev ),
 				);
 				$query   = new WP_Query( $args );
 				$postids = $query->posts;
@@ -518,110 +522,111 @@ class SolrPower_Sync {
 				wp_cache_flush();
 			}
 
-			// done importing so lets switch back to the proper blog id
-			restore_current_blog();
-		} else {
-			$args      = array(
-
-				/**
-				 * Filter indexed post types
-				 *
-				 * Filter the list of post types available to index.
-				 *
-				 * @param array $post_types Array of post type names for indexing.
-				 */
-				'post_type'      => apply_filters( 'solr_post_types', get_post_types( array( 'exclude_from_search' => false ) ) ),
-				'post_status'    => 'publish',
-				'fields'         => 'ids',
-				'posts_per_page' => absint( $limit ),
-				'offset'         => absint( $prev )
-			);
-			$query     = new WP_Query( $args );
-			$posts     = $query->posts;
-			$postcount = count( $posts );
-			if ( 0 === $postcount ) {
-				$results = array(
-					'type'    => $post_type,
-					'last'    => $last,
-					'end'     => true,
-					'percent' => 100
-				);
-				if ( $echo ) {
-					echo wp_json_encode( $results );
-				}
-				die();
-			}
-			$last    = absint( $prev ) + 5;
-			$percent = absint( ( floatval( $last ) / floatval( $query->found_posts ) ) * 100 );
-			for ( $idx = 0; $idx < $postcount; $idx ++ ) {
-				$postid = $posts[ $idx ];
-
-				$solr        = get_solr();
-				$update      = $solr->createUpdate();
-				$documents[] = $this->build_document( $update->createDocument(), get_post( $postid ) );
-				$cnt ++;
-				if ( $cnt === $batchsize ) {
-					$this->post( $documents, true, false );
-					$cnt       = 0;
-					$documents = array();
-					wp_cache_flush();
-					break;
-				}
-			}
-		}
-
-		if ( $documents ) {
-			$this->post( $documents, true, false );
-		}
-
-		if ( 100 <= $percent ) {
-			$results = array(
-				'type'    => $post_type,
-				'last'    => $last,
-				'end'     => true,
-				'percent' => 100
-			);
-		} else {
-			$results = array(
-				'type'    => $post_type,
-				'last'    => $last,
-				'end'     => false,
-				'percent' => $percent
-			);
-		}
-		if ( $echo ) {
-			echo wp_json_encode( $results );
-
-			die();
-		}
-
-		return wp_json_encode( $results );
-	}
-
-	function format_date( $thedate ) {
-		$datere  = '/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})/';
-		$replstr = '${1}T${2}Z';
-
-		return preg_replace( $datere, $replstr, $thedate );
-	}
-
-	// copies config settings from the main blog
-// to all of the other blogs
-	function copy_config_to_all_blogs() {
-		global $wpdb;
-
-		$blogs = $wpdb->get_results( "SELECT blog_id FROM $wpdb->blogs WHERE spam = 0 AND deleted = 0" );
-
-		$plugin_s4wp_settings = solr_options();
-		foreach ( $blogs as $blog ) {
-			switch_to_blog( $blog->blog_id );
-			wp_cache_flush();
-			syslog( LOG_INFO, "pushing config to {$blog->blog_id}" );
-			SolrPower_Options::get_instance()->update_option( $plugin_s4wp_settings );
-		}
-
-		wp_cache_flush();
+		// done importing so lets switch back to the proper blog id
 		restore_current_blog();
+	} else {
+$args = array(
+
+	/**
+	 * Filter indexed post types
+	 *
+	 * Filter the list of post types available to index.
+	 *
+	 * @param array $post_types Array of post type names for indexing.
+	 */
+'post_type' => apply_filters( 'solr_post_types', get_post_types( array( 'exclude_from_search' => false ) ) ),
+'post_status' => 'publish',
+'fields' => 'ids',
+'posts_per_page' => absint( $limit ),
+'offset' => absint( $prev ),
+);
+$query = new WP_Query( $args );
+$posts = $query->posts;
+$postcount = count( $posts );
+if ( 0 === $postcount ) {
+$results = array(
+'type' => $post_type,
+'last' => $last,
+'end' => true,
+'percent' => 100,
+);
+if ( $echo ) {
+echo wp_json_encode( $results );
+}
+
+die();
+}
+$last    = absint( $prev ) + 5;
+$percent = absint( ( floatval( $last ) / floatval( $query->found_posts ) ) * 100 );
+for ( $idx = 0; $idx < $postcount; $idx ++ ) {
+	$postid = $posts[ $idx ];
+
+	$solr        = get_solr();
+	$update      = $solr->createUpdate();
+	$documents[] = $this->build_document( $update->createDocument(), get_post( $postid ) );
+	$cnt ++;
+	if ( $cnt === $batchsize ) {
+		$this->post( $documents, true, false );
+		$cnt       = 0;
+		$documents = array();
+		wp_cache_flush();
+		break;
 	}
+}
+}
+
+if ( $documents ) {
+	$this->post( $documents, true, false );
+}
+
+if ( 100 <= $percent ) {
+	$results = array(
+		'type'    => $post_type,
+		'last'    => $last,
+		'end'     => true,
+		'percent' => 100,
+	);
+} else {
+	$results = array(
+		'type'    => $post_type,
+		'last'    => $last,
+		'end'     => false,
+		'percent' => $percent,
+	);
+}
+if ( $echo ) {
+	echo wp_json_encode( $results );
+
+	die();
+}
+
+return wp_json_encode( $results );
+}
+
+function format_date( $thedate ) {
+	$datere  = '/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})/';
+	$replstr = '${1}T${2}Z';
+
+	return preg_replace( $datere, $replstr, $thedate );
+}
+
+// copies config settings from the main blog
+// to all of the other blogs
+function copy_config_to_all_blogs() {
+	global $wpdb;
+
+	$blogs = $wpdb->get_results( "SELECT blog_id FROM $wpdb->blogs WHERE spam = 0 AND deleted = 0" );
+
+	$plugin_s4wp_settings = solr_options();
+	foreach ( $blogs as $blog ) {
+		switch_to_blog( $blog->blog_id );
+		wp_cache_flush();
+		syslog( LOG_INFO, "pushing config to {$blog->blog_id}" );
+		SolrPower_Options::get_instance()->update_option( $plugin_s4wp_settings );
+	}
+
+	wp_cache_flush();
+	restore_current_blog();
+}
 
 }

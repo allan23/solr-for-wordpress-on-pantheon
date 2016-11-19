@@ -170,7 +170,7 @@ class SolrPower_WP_Query {
 
 		SolrPower_Api::get_instance()->add_log( array(
 			'Results Found' => $search['numFound'],
-			'Query Time'    => $search_header['QTime'] . 'ms'
+			'Query Time'    => $search_header['QTime'] . 'ms',
 		) );
 
 		$posts = $this->parse_results( $search );
@@ -270,7 +270,7 @@ class SolrPower_WP_Query {
 			$allowed_keys   = array_merge( $allowed_keys, array_keys( $meta_clauses ) );
 		}
 
-		if ( ! in_array( $orderby, $allowed_keys ) ) {
+		if ( ! in_array( $orderby, $allowed_keys, true ) ) {
 			return false;
 		}
 
@@ -308,7 +308,7 @@ class SolrPower_WP_Query {
 					$orderby_clause = "{$meta_clause['key']}_{$this->meta_type(array('type'=>$meta_clause['cast']),true)}";
 				} else {
 					// Default: order by post field.
-					$orderby_clause = "post_" . sanitize_key( $orderby );
+					$orderby_clause = 'post_' . sanitize_key( $orderby );
 				}
 
 				break;
@@ -375,7 +375,7 @@ class SolrPower_WP_Query {
 		$return = array();
 		foreach ( $facets as $facet_name => $facet_arr ) {
 			$fq = array();
-			foreach ( $facet_arr as $facet ):
+			foreach ( $facet_arr as $facet ) :
 				// htmlspecialchars_decode because of the single quote issue in facet widget. Ex: "Hello'" category
 				$fq[] = '"' . htmlspecialchars( htmlspecialchars_decode( $facet, ENT_QUOTES ) ) . '"';
 			endforeach;
@@ -404,13 +404,13 @@ class SolrPower_WP_Query {
 			'page_id',
 			'post_status',
 			'post_parent',
-			'name'
+			'name',
 
 		);
 		$convert   = array(
 			'p'       => 'ID',
 			'page_id' => 'ID',
-			'name'    => 'post_name'
+			'name'    => 'post_name',
 		);
 		if ( ! $query->get( 'solr_integrate' ) ) {
 			return $query->get( 's' );
@@ -431,7 +431,7 @@ class SolrPower_WP_Query {
 			if ( 'post_type' === $var_key && 'any' === $var_value ) {
 				continue;
 			}
-			if ( ! empty( $var_value ) && in_array( $var_key, $whitelist ) ) {
+			if ( ! empty( $var_value ) && in_array( $var_key, $whitelist, true ) ) {
 				$var_value    = ( is_array( $var_value ) ) ? '(' . implode( ' OR ', $var_value ) . ')' : $var_value;
 				$var_key      = ( isset( $convert[ $var_key ] ) ) ? $convert[ $var_key ] : $var_key;
 				$solr_query[] = '(' . $var_key . ':' . $var_value . ')';
@@ -478,7 +478,7 @@ class SolrPower_WP_Query {
 			if ( is_array( $tax_value['terms'] ) ) {
 				$terms = array();
 				foreach ( $tax_value['terms'] as $term ) {
-					if ( ! in_array( $term, $used_terms ) ) {
+					if ( ! in_array( $term, $used_terms, true ) ) {
 						$terms[]      = '"' . $term . '"';
 						$used_terms[] = $term;
 					}
@@ -504,7 +504,7 @@ class SolrPower_WP_Query {
 						$wildcard      = '(ID:*)';
 
 
-						if ( ! in_array( $wildcard, $wildcards_used ) ) {
+						if ( ! in_array( $wildcard, $wildcards_used, true ) ) {
 							$wildcards_used[] = $wildcard;
 							$query[]          = $wildcard;
 						}
@@ -515,7 +515,7 @@ class SolrPower_WP_Query {
 
 				case 'AND':
 					$wildcard = '(' . $field . ':*)';
-					if ( ! in_array( $wildcard, $wildcards_used ) ) {
+					if ( ! in_array( $wildcard, $wildcards_used, true ) ) {
 						$wildcards_used[] = $wildcard;
 						$query[]          = $wildcard;
 					}
@@ -528,7 +528,7 @@ class SolrPower_WP_Query {
 					$multi_query[] = '(' . $field . ':' . implode( 'OR', $terms ) . ')';
 					$wildcard      = '(' . $field . ':*)';
 
-					if ( ! in_array( $wildcard, $multi_query ) ) {
+					if ( ! in_array( $wildcard, $multi_query, true ) ) {
 						$multi_query[]    = $wildcard;
 						$wildcards_used[] = $wildcard;
 					}
@@ -536,7 +536,7 @@ class SolrPower_WP_Query {
 					$query[] = '(ID:*)';
 
 					$fq = implode( 'OR', $multi_query );
-					if ( ! in_array( $fq, $tax_fq ) ) {
+					if ( ! in_array( $fq, $tax_fq, true ) ) {
 						$tax_fq[] = $fq;
 					}
 					break;
@@ -547,7 +547,7 @@ class SolrPower_WP_Query {
 					$multi_query[] = '!(' . $field . ':' . implode( 'AND', $terms ) . ')';
 					$wildcard      = '!(' . $field . ':*)';
 
-					if ( ! in_array( $wildcard, $multi_query ) ) {
+					if ( ! in_array( $wildcard, $multi_query, true ) ) {
 						$multi_query[]    = $wildcard;
 						$wildcards_used[] = $wildcard;
 					}
@@ -555,7 +555,7 @@ class SolrPower_WP_Query {
 					$query[] = '(ID:*)';
 
 					$fq = implode( 'AND', $multi_query );
-					if ( ! in_array( $fq, $tax_fq ) ) {
+					if ( ! in_array( $fq, $tax_fq, true ) ) {
 						$tax_fq[] = $fq;
 					}
 					break;
@@ -646,7 +646,7 @@ class SolrPower_WP_Query {
 					$multi_query = array();
 					$wildcard    = '(' . $meta_value['key'] . '_' . $type . ':*)';
 
-					if ( ! in_array( $wildcard, $wildcards_used ) ) {
+					if ( ! in_array( $wildcard, $wildcards_used, true ) ) {
 						$multi_query[]    = $wildcard;
 						$wildcards_used[] = $wildcard;
 					}
@@ -660,7 +660,7 @@ class SolrPower_WP_Query {
 					$multi_query[]       = '!(' . $meta_value['key'] . '_' . $type . ':' . $this->set_query_value( $meta_value['value'], $type ) . ')';
 					$wildcard            = '!(' . $meta_value['key'] . '_' . $type . ':*)';
 
-					if ( ! in_array( $wildcard, $multi_query ) ) {
+					if ( ! in_array( $wildcard, $multi_query, true ) ) {
 						$multi_query[]    = $wildcard;
 						$wildcards_used[] = $wildcard;
 					}
@@ -668,7 +668,7 @@ class SolrPower_WP_Query {
 					$query[] = '(ID:*)';
 
 					$fq = implode( 'AND', $multi_query );
-					if ( ! in_array( $fq, $this->fq ) ) {
+					if ( ! in_array( $fq, $this->fq, true ) ) {
 						$this->fq[] = $fq;
 					}
 					break;
@@ -690,7 +690,7 @@ class SolrPower_WP_Query {
 					$multi_query = array();
 					$wildcard    = '(' . $meta_value['key'] . '_' . $type . ':*)';
 
-					if ( ! in_array( $wildcard, $wildcards_used ) ) {
+					if ( ! in_array( $wildcard, $wildcards_used, true ) ) {
 						$multi_query[]    = $wildcard;
 						$wildcards_used[] = $wildcard;
 					}
@@ -730,7 +730,7 @@ class SolrPower_WP_Query {
 							$wildcard      = '(' . $meta_value['key'] . '_' . $type . ':*)';
 
 
-							if ( ! in_array( $wildcard, $wildcards_used ) ) {
+							if ( ! in_array( $wildcard, $wildcards_used, true ) ) {
 								$wildcards_used[] = $wildcard;
 								$query[]          = $wildcard;
 							}

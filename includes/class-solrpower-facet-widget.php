@@ -24,10 +24,10 @@ class SolrPower_Facet_Widget extends WP_Widget {
 		$this->dummy_query();
 		echo $args['before_widget'];
 		if ( ! empty( $instance['title'] ) ) {
-			echo $args['before_title'] . $instance['title'] . $args['after_title'];
+			echo $args['before_title'] . esc_html( $instance['title'] ) . $args['after_title'];
 		}
 		$this->facets = filter_input( INPUT_GET, 'facet', FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY );
-		echo '<form action="' . esc_url(home_url( '/' )) . '" method="get" id="solr_facet">';
+		echo '<form action="' . esc_url( home_url( '/' ) ) . '" method="get" id="solr_facet">';
 		$this->render_searchbox();
 		$this->fetch_facets();
 		echo '</form>';
@@ -126,23 +126,23 @@ class SolrPower_Facet_Widget extends WP_Widget {
 					// Decode special characters of facet and store in temporary array
 					$facets_facet_name = array_map( array(
 						__CLASS__,
-						'htmlspecialchars_decode'
+						'htmlspecialchars_decode',
 					), $this->facets[ $facet_name ] );
 				}
 			}
 
-			foreach ( $values as $name => $count ):
+			foreach ( $values as $name => $count ) :
 
 				$nice_name = str_replace( '^^', '', $name );
 				$checked   = '';
 
 				if ( isset( $this->facets[ $facet_name ] )
-				     && in_array( htmlspecialchars_decode( $name ), $facets_facet_name )
+				     && in_array( htmlspecialchars_decode( $name ), $facets_facet_name, true )
 				) {
 					$checked = checked( true, true, false );
 				}
 				echo '<li>';
-				echo '<input type="checkbox" name="facet[' . esc_attr( $facet_name ) . '][]" value="' . esc_attr( $name ) . '" ' . $checked . '> ';
+				echo '<input type="checkbox" name="facet[' . esc_attr( $facet_name ) . '][]" value="' . esc_attr( $name ) . '" ' . $checked . '> '; //XSS ok
 				echo esc_html( $nice_name );
 				echo ' (' . esc_html( $count ) . ')';
 				echo '</li>';
@@ -170,8 +170,12 @@ class SolrPower_Facet_Widget extends WP_Widget {
 			return '#';
 		}
 		unset( $facets[ $facet_name ] );
+		$new_facets = array();
+		foreach ( $facets as $name => $facet ) :
+			$new_facets[ $name ] = str_replace( '^^', '&#94;&#94;', $facet );
+		endforeach;
 
-		return add_query_arg( array( 'facet' => $facets ) );
+		return add_query_arg( array( 'facet' => $new_facets ) );
 	}
 
 	/**

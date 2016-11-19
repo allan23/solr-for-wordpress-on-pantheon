@@ -62,10 +62,10 @@ class SolrPower {
 		if ( getenv( 'PANTHEON_ENVIRONMENT' ) !== false && getenv( 'PANTHEON_INDEX_HOST' ) === false ) {
 			$returnValue = wp_kses( __( 'Before you can activate this plugin, you must first <a href="https://pantheon.io/docs/articles/sites/apache-solr/">activate Solr</a> in your Pantheon Dashboard.', 'solr-for-wordpress-on-pantheon' ), array(
 				'a' => array(
-					'href' => array()
-				)
+					'href' => array(),
+				),
 			) );
-		} else if ( version_compare( $wp_version, '3.0', '<' ) ) {
+		} elseif ( version_compare( $wp_version, '3.0', '<' ) ) {
 			$returnValue = esc_html__( 'This plugin requires WordPress 3.0 or greater.', 'solr-for-wordpress-on-pantheon' );
 		}
 
@@ -85,7 +85,7 @@ class SolrPower {
 		}
 		wp_enqueue_script( 'solr-js', SOLR_POWER_URL . 'template/script.js', false );
 		$solr_js = array(
-			'ajax_url'	 => admin_url( 'admin-ajax.php' ),
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
 
 			/**
 			 * Filter indexed post types
@@ -96,7 +96,7 @@ class SolrPower {
 			 */
 
 			'post_types' => apply_filters( 'solr_post_types', get_post_types( array( 'exclude_from_search' => false ) ) ),
-			'security'   => wp_create_nonce( "solr_security" )
+			'security'   => wp_create_nonce( 'solr_security' ),
 		);
 		wp_localize_script( 'solr-js', 'solr', $solr_js );
 	}
@@ -111,7 +111,7 @@ class SolrPower {
 	 */
 	function plugin_settings_link( $links, $file ) {
 
-		if ( $file !== plugin_basename( SOLR_POWER_PATH . '/solr-power.php' ) ) {
+		if ( plugin_basename( SOLR_POWER_PATH . '/solr-power.php' ) !== $file ) {
 			return $links;
 		}
 
@@ -154,10 +154,10 @@ class SolrPower {
 		if ( file_exists( TEMPLATEPATH . '/s4wp_search.php' ) ) {
 			// use theme file
 			include_once( TEMPLATEPATH . '/s4wp_search.php' );
-		} else if ( file_exists( SOLR_POWER_PATH . '/template/s4wp_search.php' ) ) {
+		} elseif ( file_exists( SOLR_POWER_PATH . '/template/s4wp-search.php' ) ) {
 			// use plugin supplied file
 			add_action( 'wp_head', array( $this, 'default_head' ) );
-			include_once( SOLR_POWER_PATH . '/template/s4wp_search.php' );
+			include_once( SOLR_POWER_PATH . '/template/s4wp-search.php' );
 		} else {
 			// no template files found, just continue on like normal
 			// this should get to the normal WordPress search results

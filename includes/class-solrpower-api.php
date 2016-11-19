@@ -170,9 +170,9 @@ class SolrPower_Api {
 					 */
 					'scheme' => apply_filters( 'solr_scheme', $default_scheme ),
 					'path'   => $this->compute_path(),
-					'ssl'    => array( 'local_cert' => realpath( ABSPATH . '../certs/binding.pem' ) )
-				)
-			)
+					'ssl'    => array( 'local_cert' => realpath( ABSPATH . '../certs/binding.pem' ) ),
+				),
+			),
 		);
 
 		/**
@@ -274,7 +274,7 @@ class SolrPower_Api {
 			'Count'        => $count,
 			'Filter Query' => $fq,
 			'Sort By'      => $sortby,
-			'Order'        => $order
+			'Order'        => $order,
 		) );
 
 
@@ -305,7 +305,7 @@ class SolrPower_Api {
 		if ( count( $facet_on_custom_taxonomy ) ) {
 			$taxonomies = (array) get_taxonomies( array( '_builtin' => false ), 'names' );
 			foreach ( $taxonomies as $parent ) {
-				$facet_fields[] = $parent . "_taxonomy";
+				$facet_fields[] = $parent . '_taxonomy';
 			}
 		}
 
@@ -330,9 +330,9 @@ class SolrPower_Api {
 				'fields'     => '*,score',
 				'start'      => $offset,
 				'rows'       => $count,
-				'omitheader' => false
+				'omitheader' => false,
 			);
-			if ( $sortby !== "" ) {
+			if ( '' !== $sortby ) {
 				$select['sort'] = array( $sortby => $order );
 			} else {
 				$select['sort'] = array( 'post_date' => 'desc' );
@@ -357,7 +357,6 @@ class SolrPower_Api {
 				if ( '' !== $fq ) {
 					$query->createFilterQuery( 'searchfq' )->setQuery( $fq );
 				}
-
 			}
 			$query->getHighlighting()->setFields( 'post_content' );
 			$query->getHighlighting()->setSimplePrefix( '<b>' );
@@ -384,7 +383,7 @@ class SolrPower_Api {
 					$response = null;
 				}
 			} catch ( Exception $e ) {
-				syslog( LOG_ERR, "failed to query solr. " . $e->getMessage() );
+				syslog( LOG_ERR, 'failed to query solr. ' . $e->getMessage() );
 				$response = null;
 			}
 		}
@@ -478,7 +477,6 @@ class SolrPower_Api {
 				// Set a transient so we are not checking on every page load.
 				set_transient( 'schema_check', '1', 300 );
 			}
-
 		}
 	}
 
