@@ -83,7 +83,7 @@ class SolrDateQueryTest extends SolrTestBase {
 				array(
 					'year'  => 1987,
 					'month' => 03,
-					'day' => 03,
+					'day'   => 03,
 				),
 			),
 		) );
