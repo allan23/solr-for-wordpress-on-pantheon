@@ -4,18 +4,16 @@ class SolrTaxQueryTest extends SolrTestBase {
 	function setUp() {
 
 		parent::setUp();
-
+		// Setup bulk indexing/syncing
+		SolrPower_Sync::get_instance()->bulk = true;
 	}
 
 	function tearDown() {
 		parent::tearDown();
+		// Disable bulk indexing/syncing
+		SolrPower_Sync::get_instance()->bulk = false;
 	}
-
-	function show_query() {
-		print_r( SolrPower_WP_Query::get_instance()->backup );
-		print_r( SolrPower_Api::get_instance()->log );
-	}
-
+	
 	function test_wp_query_by_tax() {
 		$this->__create_test_post();
 

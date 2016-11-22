@@ -19,8 +19,9 @@ class SolrTest extends SolrTestBase {
 
 
 	function test_wildcard_search() {
-
+		SolrPower_Sync::get_instance()->bulk = true;
 		$this->__create_multiple( 5 );
+		SolrPower_Sync::get_instance()->bulk = false;
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$search = $this->__run_test_query( '*:*' );
 
@@ -88,8 +89,12 @@ class SolrTest extends SolrTestBase {
 	 * @link https://github.com/pantheon-systems/solr-power/issues/43
 	 */
 	function test_index_all_posts() {
+		SolrPower_Sync::get_instance()->bulk = true;
 		// Create 20 posts:
 		$this->__create_multiple( 20 );
+		SolrPower_Sync::get_instance()->bulk = false;
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
+
 		// Delete index.
 		SolrPower_Sync::get_instance()->delete_all();
 		// Index all posts:
@@ -114,7 +119,9 @@ class SolrTest extends SolrTestBase {
 	function test_index_stats() {
 		$this->__create_test_post( 'page' );
 		$this->__create_test_post( 'page' );
+		SolrPower_Sync::get_instance()->bulk = true;
 		$this->__create_multiple( 5 );
+		SolrPower_Sync::get_instance()->bulk = false;
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$stats = SolrPower_Api::get_instance()->index_stats();
 		$this->assertEquals( 2, $stats['page'] );
@@ -129,7 +136,10 @@ class SolrTest extends SolrTestBase {
 	function test_index_stats_on_delete_all() {
 		$this->__create_test_post( 'page' );
 		$this->__create_test_post( 'page' );
+		SolrPower_Sync::get_instance()->bulk = true;
 		$this->__create_multiple( 5 );
+		SolrPower_Sync::get_instance()->bulk = false;
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 
 		// Delete all of these newly indexed items:
 		SolrPower_Sync::get_instance()->delete_all();
@@ -147,7 +157,10 @@ class SolrTest extends SolrTestBase {
 	function test_index_stats_on_delete() {
 		$delete_id = $this->__create_test_post( 'page' );
 		$this->__create_test_post( 'page' );
+		SolrPower_Sync::get_instance()->bulk = true;
 		$this->__create_multiple( 5 );
+		SolrPower_Sync::get_instance()->bulk = false;
+		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 
 		if ( is_multisite() ) {
 			$blogid    = get_current_blog_id();
@@ -166,7 +179,9 @@ class SolrTest extends SolrTestBase {
 	 * @group 37
 	 */
 	function test_facets() {
+		SolrPower_Sync::get_instance()->bulk = true;
 		$this->__create_multiple( 5 );
+		SolrPower_Sync::get_instance()->bulk = false;
 		SolrPower_Sync::get_instance()->load_all_posts( 0, 'post', 100, false );
 		$this->__facet_query();
 		$facets = SolrPower_WP_Query::get_instance()->facets;

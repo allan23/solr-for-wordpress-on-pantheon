@@ -9,6 +9,12 @@ class SolrPower_Sync {
 	private static $instance = false;
 
 	/**
+	 * If using bulk syncing, ignore the post modified hook.
+	 * @var bool
+	 */
+	var $bulk = false;
+
+	/**
 	 * Last error message.
 	 * @var string
 	 */
@@ -44,6 +50,9 @@ class SolrPower_Sync {
 	}
 
 	function handle_modified( $post_id ) {
+		if ( $this->bulk ) {
+			return;
+		}
 		global $current_blog;
 
 		$post_info = get_post( $post_id );
