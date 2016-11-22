@@ -531,5 +531,4 @@ class SolrPower_Options {
 			'choices' => $choices,
 		) );
 	}
-
 }

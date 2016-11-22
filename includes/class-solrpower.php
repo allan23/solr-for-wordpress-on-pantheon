@@ -209,5 +209,4 @@ class SolrPower {
 	function add_scripts() {
 		wp_enqueue_script( 'Solr_Facet', SOLR_POWER_URL . 'assets/js/facet.js' );
 	}
-
 }

@@ -245,5 +245,4 @@ class SolrPower_CLI extends WP_CLI_Command {
 		$formatter = new \WP_CLI\Formatter( $assoc_args, array_keys( $stats ) );
 		$formatter->display_item( $stats );
 	}
-
 }
