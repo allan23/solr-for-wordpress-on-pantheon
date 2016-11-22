@@ -72,9 +72,9 @@ class SolrPower_Sync {
 		}
 		# make sure this blog is not private or a spam if indexing on a multisite install
 		if ( is_multisite()
-		     && ( 1 !== $current_blog->public
-		          || 1 !== $current_blog->spam
-		          || 1 !== $current_blog->archived )
+		     && ( 1 !== (int) $current_blog->public
+		          || 1 === (int) $current_blog->spam
+		          || 1 === (int) $current_blog->archived )
 		) {
 			return;
 		}
