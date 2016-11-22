@@ -57,7 +57,7 @@ class SolrPower_Sync {
 
 		$this->handle_status_change( $post_id, $post_info );
 		if ( 'revision' === $post_info->post_type
-		     || 'publish' === $post_info->post_status
+		     || 'publish' !== $post_info->post_status
 		) {
 			return;
 		}
@@ -260,7 +260,7 @@ class SolrPower_Sync {
 			$doc->setField( 'post_status', $post_info->post_status );
 
 			$categories = get_the_category( $post_info->ID );
-			if ( null !== $categories ) {
+			if ( ! empty( $categories ) ) {
 				foreach ( $categories as $category ) {
 					if ( $categoy_as_taxonomy ) {
 						$doc->addField( 'categories', get_category_parents( $category->cat_ID, false, '^^' ) );
@@ -288,7 +288,7 @@ class SolrPower_Sync {
 			$taxonomies = (array) get_taxonomies( array( '_builtin' => false ), 'names' );
 			foreach ( $taxonomies as $parent ) {
 				$terms = get_the_terms( $post_info->ID, $parent );
-				if ( (array) $terms === $terms ) {
+				if ( false !== $terms && ! is_wp_error( $terms ) ) {
 					//we are creating *_taxonomy as dynamic fields using our schema
 					//so lets set up all our taxonomies in that format
 					$parent = $parent . '_taxonomy';
@@ -302,7 +302,7 @@ class SolrPower_Sync {
 			}
 
 			$tags = get_the_tags( $post_info->ID );
-			if ( null !== $tags ) {
+			if ( false !== $tags && ! is_wp_error( $tags ) ) {
 				foreach ( $tags as $tag ) {
 					$doc->addField( 'tags', $tag->name );
 					$doc->addField( 'tags_slug_str', $tag->slug );
@@ -522,111 +522,110 @@ class SolrPower_Sync {
 				wp_cache_flush();
 			}
 
-		// done importing so lets switch back to the proper blog id
-		restore_current_blog();
-	} else {
-$args = array(
+			// done importing so lets switch back to the proper blog id
+			restore_current_blog();
+		} else {
+			$args      = array(
 
-	/**
-	 * Filter indexed post types
-	 *
-	 * Filter the list of post types available to index.
-	 *
-	 * @param array $post_types Array of post type names for indexing.
-	 */
-'post_type' => apply_filters( 'solr_post_types', get_post_types( array( 'exclude_from_search' => false ) ) ),
-'post_status' => 'publish',
-'fields' => 'ids',
-'posts_per_page' => absint( $limit ),
-'offset' => absint( $prev ),
-);
-$query = new WP_Query( $args );
-$posts = $query->posts;
-$postcount = count( $posts );
-if ( 0 === $postcount ) {
-$results = array(
-'type' => $post_type,
-'last' => $last,
-'end' => true,
-'percent' => 100,
-);
-if ( $echo ) {
-echo wp_json_encode( $results );
-}
+				/**
+				 * Filter indexed post types
+				 *
+				 * Filter the list of post types available to index.
+				 *
+				 * @param array $post_types Array of post type names for indexing.
+				 */
+				'post_type'      => apply_filters( 'solr_post_types', get_post_types( array( 'exclude_from_search' => false ) ) ),
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+				'posts_per_page' => absint( $limit ),
+				'offset'         => absint( $prev ),
+			);
+			$query     = new WP_Query( $args );
+			$posts     = $query->posts;
+			$postcount = count( $posts );
+			if ( 0 === $postcount ) {
+				$results = array(
+					'type'    => $post_type,
+					'last'    => $last,
+					'end'     => true,
+					'percent' => 100,
+				);
+				if ( $echo ) {
+					echo wp_json_encode( $results );
+				}
 
-die();
-}
-$last    = absint( $prev ) + 5;
-$percent = absint( ( floatval( $last ) / floatval( $query->found_posts ) ) * 100 );
-for ( $idx = 0; $idx < $postcount; $idx ++ ) {
-	$postid = $posts[ $idx ];
+				die();
+			}
+			$last    = absint( $prev ) + 5;
+			$percent = absint( ( floatval( $last ) / floatval( $query->found_posts ) ) * 100 );
+			for ( $idx = 0; $idx < $postcount; $idx ++ ) {
+				$postid = $posts[ $idx ];
 
-	$solr        = get_solr();
-	$update      = $solr->createUpdate();
-	$documents[] = $this->build_document( $update->createDocument(), get_post( $postid ) );
-	$cnt ++;
-	if ( $cnt === $batchsize ) {
-		$this->post( $documents, true, false );
-		$cnt       = 0;
-		$documents = array();
-		wp_cache_flush();
-		break;
+				$solr        = get_solr();
+				$update      = $solr->createUpdate();
+				$documents[] = $this->build_document( $update->createDocument(), get_post( $postid ) );
+				$cnt ++;
+				if ( $cnt === $batchsize ) {
+					$this->post( $documents, true, false );
+					$cnt       = 0;
+					$documents = array();
+					wp_cache_flush();
+					break;
+				}
+			}
+		}
+
+		if ( $documents ) {
+			$this->post( $documents, true, false );
+		}
+
+		if ( 100 <= $percent ) {
+			$results = array(
+				'type'    => $post_type,
+				'last'    => $last,
+				'end'     => true,
+				'percent' => 100,
+			);
+		} else {
+			$results = array(
+				'type'    => $post_type,
+				'last'    => $last,
+				'end'     => false,
+				'percent' => $percent,
+			);
+		}
+		if ( $echo ) {
+			echo wp_json_encode( $results );
+
+			die();
+		}
+
+		return wp_json_encode( $results );
 	}
-}
-}
 
-if ( $documents ) {
-	$this->post( $documents, true, false );
-}
+	function format_date( $thedate ) {
+		$datere  = '/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})/';
+		$replstr = '${1}T${2}Z';
 
-if ( 100 <= $percent ) {
-	$results = array(
-		'type'    => $post_type,
-		'last'    => $last,
-		'end'     => true,
-		'percent' => 100,
-	);
-} else {
-	$results = array(
-		'type'    => $post_type,
-		'last'    => $last,
-		'end'     => false,
-		'percent' => $percent,
-	);
-}
-if ( $echo ) {
-	echo wp_json_encode( $results );
-
-	die();
-}
-
-return wp_json_encode( $results );
-}
-
-function format_date( $thedate ) {
-	$datere  = '/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})/';
-	$replstr = '${1}T${2}Z';
-
-	return preg_replace( $datere, $replstr, $thedate );
-}
+		return preg_replace( $datere, $replstr, $thedate );
+	}
 
 // copies config settings from the main blog
 // to all of the other blogs
-function copy_config_to_all_blogs() {
-	global $wpdb;
+	function copy_config_to_all_blogs() {
+		global $wpdb;
 
-	$blogs = $wpdb->get_results( "SELECT blog_id FROM $wpdb->blogs WHERE spam = 0 AND deleted = 0" );
+		$blogs = $wpdb->get_results( "SELECT blog_id FROM $wpdb->blogs WHERE spam = 0 AND deleted = 0" );
 
-	$plugin_s4wp_settings = solr_options();
-	foreach ( $blogs as $blog ) {
-		switch_to_blog( $blog->blog_id );
+		$plugin_s4wp_settings = solr_options();
+		foreach ( $blogs as $blog ) {
+			switch_to_blog( $blog->blog_id );
+			wp_cache_flush();
+			syslog( LOG_INFO, "pushing config to {$blog->blog_id}" );
+			SolrPower_Options::get_instance()->update_option( $plugin_s4wp_settings );
+		}
+
 		wp_cache_flush();
-		syslog( LOG_INFO, "pushing config to {$blog->blog_id}" );
-		SolrPower_Options::get_instance()->update_option( $plugin_s4wp_settings );
+		restore_current_blog();
 	}
-
-	wp_cache_flush();
-	restore_current_blog();
-}
-
 }

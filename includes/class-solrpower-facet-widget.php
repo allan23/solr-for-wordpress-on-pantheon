@@ -22,16 +22,16 @@ class SolrPower_Facet_Widget extends WP_Widget {
 	 */
 	public function widget( $args, $instance ) {
 		$this->dummy_query();
-		echo $args['before_widget'];
+		echo $args['before_widget']; // XSS ok.
 		if ( ! empty( $instance['title'] ) ) {
-			echo $args['before_title'] . esc_html( $instance['title'] ) . $args['after_title'];
+			echo $args['before_title'] . esc_html( $instance['title'] ) . $args['after_title']; // XSS ok.
 		}
 		$this->facets = filter_input( INPUT_GET, 'facet', FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY );
 		echo '<form action="' . esc_url( home_url( '/' ) ) . '" method="get" id="solr_facet">';
 		$this->render_searchbox();
 		$this->fetch_facets();
 		echo '</form>';
-		echo $args['after_widget'];
+		echo $args['after_widget']; // XSS ok.
 	}
 
 	/**
@@ -94,7 +94,7 @@ class SolrPower_Facet_Widget extends WP_Widget {
 			 */
 			$html = apply_filters( 'solr_facet_items', false, $facet_name, $data );
 			if ( $html ) {
-				echo $html;
+				echo $html; // XSS ok.
 				continue;
 			}
 			/**
@@ -142,15 +142,13 @@ class SolrPower_Facet_Widget extends WP_Widget {
 					$checked = checked( true, true, false );
 				}
 				echo '<li>';
-				echo '<input type="checkbox" name="facet[' . esc_attr( $facet_name ) . '][]" value="' . esc_attr( $name ) . '" ' . $checked . '> '; //XSS ok
+				echo '<input type="checkbox" name="facet[' . esc_attr( $facet_name ) . '][]" value="' . esc_attr( $name ) . '" ' . $checked . '> '; // XSS ok.
 				echo esc_html( $nice_name );
 				echo ' (' . esc_html( $count ) . ')';
 				echo '</li>';
 			endforeach;
 
 			echo '</ul>';
-
-
 			echo '<a href="' . esc_url( $this->reset_url( $facet_name ) ) . '">Reset</a>';
 
 		}
@@ -191,7 +189,7 @@ class SolrPower_Facet_Widget extends WP_Widget {
 		 *
 		 * @param string $html the search box html.
 		 */
-		echo apply_filters( 'solr_facet_searchbox', $html );
+		echo apply_filters( 'solr_facet_searchbox', $html ); // XSS ok.
 	}
 
 	/**
@@ -202,7 +200,6 @@ class SolrPower_Facet_Widget extends WP_Widget {
 	 * @return bool
 	 */
 	function show_facet( $facet ) {
-
 
 		if ( 0 < strpos( $facet, 'taxonomy' ) ) {
 			$facet = 'taxonomy';
@@ -247,7 +244,7 @@ class SolrPower_Facet_Widget extends WP_Widget {
 	/**
 	 * Callback for array_map to decode html special characters
 	 *
-	 * @param $facet
+	 * @param string $facet
 	 *
 	 * @return string
 	 */
