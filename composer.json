@@ -16,7 +16,7 @@
     "require": {
         "solarium/solarium": "3.6.0",
         "squizlabs/php_codesniffer": "2.6.2",
-        "wp-coding-standards/wpcs": "0.9.0",
+        "wp-coding-standards/wpcs": "0.8.0",
         "stevegrunwell/wp-enforcer": "^0.4.1"
     },
     "require-dev": {
