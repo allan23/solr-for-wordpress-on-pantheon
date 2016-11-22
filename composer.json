@@ -22,6 +22,10 @@
         "squizlabs/php_codesniffer": "2.6.2",
         "wp-coding-standards/wpcs": "0.9.0"
     },
+    "scripts": {
+        "post-install-cmd": "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs",
+        "post-update-cmd" : "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs"
+    },
     "autoload": {
         "classmap": [
             "includes"
